@@ -1,16 +1,14 @@
 from pathlib import Path
 
-from pydantic_settings import BaseSettings
 from pydantic import PostgresDsn
+from pydantic_settings import BaseSettings
 
 project_root_path = Path(__file__).parent.parent.parent
 
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
-    POSTGRES_URL: PostgresDsn = (
-        "postgresql://postgres:postgres@localhost:5432/tgbot_nakama"
-    )
+    POSTGRES_URL: PostgresDsn = "postgresql://postgres:postgres@localhost:5432/tgbot_nakama"
     QDRANT_URL: str = "http://localhost:6333"
 
     ADMINS: str

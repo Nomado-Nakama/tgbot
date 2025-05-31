@@ -1,4 +1,5 @@
 import asyncio
+
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import Command
@@ -7,8 +8,8 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from aiohttp import web
 
 from src.bot.config import settings
-from src.bot.logger import logger
 from src.bot.db import fetchrow, init_pool
+from src.bot.logger import logger
 
 dp = Dispatcher()
 
@@ -48,9 +49,7 @@ async def main():
 
         # Setup request handler for the webhook path
         webhook_request_handler = SimpleRequestHandler(
-            dispatcher=dp,
-            bot=bot,
-            secret_token=settings.WEBHOOK_SECRET
+            dispatcher=dp, bot=bot, secret_token=settings.WEBHOOK_SECRET
         )
         webhook_request_handler.register(app, path=settings.WEBHOOK_PATH)
 

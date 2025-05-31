@@ -1,7 +1,9 @@
-import asyncpg
 from contextlib import asynccontextmanager
-from src.bot.config import settings
+
+import asyncpg
 from loguru import logger
+
+from src.bot.config import settings
 
 _pool: asyncpg.Pool | None = None
 
