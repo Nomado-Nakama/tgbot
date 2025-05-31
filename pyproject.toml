@@ -4,4 +4,26 @@ version = "0.0.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "aiogram>=3.20.0.post0",
+    "alembic>=1.16.1",
+    "asyncpg>=0.30.0",
+    "black>=25.1.0",
+    "loguru>=0.7.3",
+    "pre-commit>=4.2.0",
+    "pydantic>=2.11.5",
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
+    "python-dotenv>=1.1.0",
+    "qdrant-client>=1.14.2",
+    "ruff>=0.11.12",
+    "testcontainers[postgres]>=4.10.0",
+]
+
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "UP"]
