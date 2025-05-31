@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     WEBAPP_HOST: str = "localhost"
     WEBAPP_PORT: str = "5001"
 
+    FULL_CONTENT_GOOGLE_DOCS_URL: str
+    GOOGLE_SERVICE_ACCOUNT_BASE64: str
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

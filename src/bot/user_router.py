@@ -1,12 +1,13 @@
 """
 All *public* (non-admin) handlers live here.
 """
-from aiogram import Router, F
+
+from aiogram import F, Router
+from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
-from aiogram.filters import CommandStart, Command
 
 from src.bot.content_dao import get_children, get_content
-from src.bot.keyboard import build_children_kb, ROOT_BACK_ID
+from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
 router = Router(name="user")
 

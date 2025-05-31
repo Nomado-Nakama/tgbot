@@ -1,6 +1,7 @@
 """
 Inline-keyboard helpers (pure functions, easy to unit-test).
 """
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 

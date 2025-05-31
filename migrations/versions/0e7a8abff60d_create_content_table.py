@@ -10,7 +10,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision: str = '0e7a8abff60d'
 down_revision: Union[str, None] = None
@@ -30,6 +29,7 @@ def upgrade() -> None:
         );
         CREATE INDEX idx_content_parent ON content(parent_id);
     """)
+
 
 def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS content CASCADE;")

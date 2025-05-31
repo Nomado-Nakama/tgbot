@@ -1,15 +1,16 @@
 import asyncio
 
-from aiohttp import web
-from aiogram.types import Message
 from aiogram import Bot, Dispatcher
-from aiogram.filters import Command
 from aiogram.client.default import DefaultBotProperties
+from aiogram.filters import Command
+from aiogram.types import Message
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiohttp import web
 
-from src.bot.logger import logger
 from src.bot.config import settings
 from src.bot.db import fetchrow, init_pool
+from src.bot.google_doc_loader import reload_content_from_google_docx_to_db
+from src.bot.logger import logger
 from src.bot.user_router import router as user_router
 
 dp = Dispatcher()
@@ -26,6 +27,7 @@ async def ping(message: Message):
 
 
 async def main():
+    await reload_content_from_google_docx_to_db()
     bot = Bot(settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 
     if settings.RUNNING_ENV == "LOCAL":

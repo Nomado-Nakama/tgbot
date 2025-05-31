@@ -29,11 +29,11 @@ async def fetchrow(sql: str, *args):
         return await conn.fetchrow(sql, *args)
 
 
-async def fetch(sql: str, *args):
+async def fetch(sql: str, *args, **kwargs):
     async with get_conn() as conn:
-        return await conn.fetch(sql, *args)
+        return await conn.fetch(sql, *args, **kwargs)
 
 
-async def execute(sql: str, *args):
+async def execute(sql: str, *args, **kwargs):
     async with get_conn() as conn:
-        return await conn.execute(sql, *args)
+        return await conn.execute(sql, *args, **kwargs)

@@ -41,7 +41,7 @@
 
 ---
 
-## [0.0.7] – 2025-06-02
+## [0.0.7] – 2025-06-01
 
 ### Added
 - **User‐facing navigation**  
@@ -101,5 +101,69 @@
 
 ### Removed / Deprecated
 - **Live-DB testing** in `tests/test_content_dao.py` (no longer necessary; replaced by Testcontainers).  
+
+---
+
+## \[0.0.8] – 2025-06-01
+
+### Added
+
+* **Google Docs integration**
+
+  * New module `google_doc_loader.py` fetches a Google Doc using a service account, parses text based on heading styles, and auto-populates the database with a hierarchical structure.
+  * Heading structure levels:
+    * `H1:` (countries)
+    * `H2:` (topics)
+    * `H3:` (questions)
+    * Body text beneath `H3` becomes article content.
+  * `reload_content_from_google_docx_to_db()` automates the whole flow: fetch → parse → wipe old → insert new.
+
+* **Env & config additions**
+
+  * New `.env` vars:
+
+    * `GOOGLE_SERVICE_ACCOUNT_BASE64` – your service account JSON (base64-encoded)
+    * `FULL_CONTENT_GOOGLE_DOCS_URL` – link to the source document
+  * Added to `.env.example` and parsed via `settings.py`.
+
+* **Content parsing + seeding**
+
+  * `ContentNode` structure now lives in `content_dao.py`, with:
+
+    * `insert_node()` – recursive tree insert
+    * `remove_all_content()` – truncate all content
+    * `parse_google_doc_text_as_list_of_content_nodes()` – build tree from parsed text
+  * Full seeding triggered automatically from `main.py` on bot startup (`await reload_content_from_google_docx_to_db()`).
+
+* **Dependencies**
+
+  * Added optional \[google] dependencies to `pyproject.toml`:
+
+    * `google-api-python-client`
+    * `google-auth`
+    * `google-auth-httplib2`
+    * `google-auth-oauthlib`
+
+### Changed
+
+* **Startup process**
+
+  * `main.py` now calls `reload_content_from_google_docx_to_db()` before starting the bot. This ensures the latest content is loaded from Google Docs every time the bot restarts.
+
+* **`.gitignore`**
+
+  * Excludes `google-service-account.json` as a safeguard, even though it's not used directly (base64 only).
+
+* **`.env.example`**
+
+  * Includes placeholder values for the new Google Docs integration variables.
+
+* **Database utils**
+
+  * `fetch`, `execute` now accept `**kwargs` to support future extensions (e.g. query timeouts or custom connection args).
+
+### Removed
+
+* 🗑️ Deleted legacy `scripts/seed_demo.py` (and its `__init__.py`) which previously inserted static placeholder content.
 
 ---
