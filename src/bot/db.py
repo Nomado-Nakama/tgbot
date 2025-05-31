@@ -8,11 +8,11 @@ from src.bot.config import settings
 _pool: asyncpg.Pool | None = None
 
 
-async def init_pool():
+async def init_pool(postgres_url: str = settings.POSTGRES_URL):
     global _pool
     if _pool is None:
         logger.info("Connecting to Postgres …")
-        _pool = await asyncpg.create_pool(str(settings.POSTGRES_URL), min_size=2, max_size=10)
+        _pool = await asyncpg.create_pool(str(postgres_url), min_size=2, max_size=10)
         logger.success("Postgres connection pool ready")
 
 

@@ -38,3 +38,68 @@
 - Project renamed to `tgbot-nakama`
 - All components are structured with production in mind (async DB, CI, logs, etc.)
 - Ready for milestone 1: user-facing inline navigation and admin content management
+
+---
+
+## [0.0.7] – 2025-06-02
+
+### Added
+- **User‐facing navigation**  
+  - `/start` and `/help` commands send a welcome message (in Russian) and display the top-level content menu.  
+  - Inline callback handlers for:
+    - `open_<id>`: open a category or article by its content ID.  
+    - `back_<parent_id>`: go up one level in the hierarchy.  
+    - `back_root`: return to the main menu from any level.  
+  - Splitting of long article text into 4 000-character chunks to avoid Telegram’s 4 096-character limit.
+
+- **`keyboard.py` helper**  
+  - Pure‐function `build_children_kb(children: list[Content], *, parent_id: int | None) → InlineKeyboardMarkup`  
+    • Renders one button per child item, plus “⬅️ Назад” (if not at root) and “🏠 Главная” (always present).  
+    • Returns a ready-to-use `InlineKeyboardMarkup` with proper `callback_data` values.
+
+- **`user_router.py` module**  
+  - All public (non-admin) handlers moved out of `main.py` into a dedicated `Router(name="user")`.  
+  - Registered in `main.py` via `dp.include_router(user_router)`—keeps code modular and testable.
+
+- **Unit tests**  
+  - New `tests/test_keyboard.py` to verify the structure and button texts of the root keyboard.  
+  - End-to-end “happy-path” for `get_children(None)` in `tests/test_content_dao.py` now runs against Testcontainers’ ephemeral Postgres.
+
+- **Testcontainers Postgres fixture**  
+  - In `tests/conftest.py`, replaced any reliance on a live database with a `PostgresContainer("postgres:16-alpine")`.  
+  - `init_pool(postgres_url=…)` is called with the container’s connection URL, ensuring isolation and repeatability.
+
+- **Demo seeding script**  
+  - `scripts/seed_demo.py` inserts a small hierarchy (“Европа” → “Франция”, “Испания”; “Азия”) so that local development and CI aren’t empty.
+
+- **Docker Compose enhancements**  
+  - Added a `db` service (Postgres 16-alpine) with a healthcheck.  
+  - `bot` service now `depends_on: db` (condition: service_healthy).  
+  - Postgres port mapped to host `9441:5432` (for local inspection, if needed).
+
+- **CI pipeline updates**  
+  - `.github/workflows/ci.yml` now:
+    1. Installs dev+test dependencies (`pip install -e .[test]`).  
+    2. Runs `alembic upgrade head`.  
+    3. Executes `pytest -q`.  
+
+### Changed
+- **`main.py` updates**  
+  - Imported and registered `user_router` instead of placing all handlers inline.  
+  - Adjusted `init_pool()` signature to accept an optional `postgres_url` (used by Testcontainers).
+
+- **DAO tests**  
+  - Removed reliance on “runs safely against a non-empty prod DB.” Now always uses Testcontainers.
+
+- **`docker-compose.yaml`**  
+  - Bumped Postgres to `postgres:16-alpine` and exposed port 9441.  
+  - Removed placeholder “data” for the `bot` service—now fully wired with `db`.
+
+- **Documentation**  
+  - Appended a new “0.0.7” section to `docs/CHANGELOG.md`.  
+  - Added instructions for `scripts/seed_demo.py` to `CHANGELOG` and `README.md`.
+
+### Removed / Deprecated
+- **Live-DB testing** in `tests/test_content_dao.py` (no longer necessary; replaced by Testcontainers).  
+
+---

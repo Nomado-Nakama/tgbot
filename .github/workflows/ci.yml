@@ -1,2 +1,7 @@
+- name: Install deps
+  run: |
+    pip install -e .[test]
 - name: Run migrations
   run: alembic upgrade head
+- name: Tests
+  run: pytest -q
