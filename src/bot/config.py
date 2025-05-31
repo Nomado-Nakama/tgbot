@@ -8,10 +8,17 @@ project_root_path = Path(__file__).parent.parent.parent
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
-    DATABASE_URL: PostgresDsn = (
+    POSTGRES_URL: PostgresDsn = (
         "postgresql://postgres:postgres@localhost:5432/tgbot_nakama"
     )
     QDRANT_URL: str = "http://localhost:6333"
+
+    ADMINS: str
+
+    RUNNING_ENV: str = "LOCAL"
+    WEBHOOK_HOST: str = "http://localhost"
+    WEBAPP_HOST: str = "localhost"
+    WEBAPP_PORT: str = "5001"
 
     class Config:
         env_file = ".env"

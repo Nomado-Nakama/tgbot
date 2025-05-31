@@ -1,0 +1,8 @@
+services:
+  bot:
+    build: .
+    restart: always
+    env_file:
+      - ./bot_core/.env
+    ports:
+      - ${WEBAPP_PORT}:${WEBAPP_PORT}

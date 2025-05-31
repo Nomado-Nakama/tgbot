@@ -10,7 +10,7 @@ async def init_pool():
     global _pool
     if _pool is None:
         logger.info("Connecting to Postgres …")
-        _pool = await asyncpg.create_pool(str(settings.DATABASE_URL), min_size=2, max_size=10)
+        _pool = await asyncpg.create_pool(str(settings.POSTGRES_URL), min_size=2, max_size=10)
         logger.success("Postgres connection pool ready")
 
 
