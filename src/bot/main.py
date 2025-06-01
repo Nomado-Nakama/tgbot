@@ -1,11 +1,12 @@
 import asyncio
+import traceback
 
+from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import Command
 from aiogram.types import Message
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
-from aiohttp import web
 
 from src.bot.config import settings
 from src.bot.db import fetchrow, init_pool
@@ -14,7 +15,6 @@ from src.bot.logger import logger
 from src.bot.user_router import router as user_router
 
 dp = Dispatcher()
-
 dp.include_router(user_router)
 
 
@@ -30,44 +30,55 @@ async def main():
     await reload_content_from_google_docx_to_db()
     bot = Bot(settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 
-    if settings.RUNNING_ENV == "LOCAL":
-        """
-        LOCAL ENV:
-          - Use long polling instead of webhooks.
-          - Typically we won't run an aiohttp server or set up ngrok locally.
-        """
+    try:
+        if settings.RUNNING_ENV == "LOCAL":
+            logger.info("Running in LOCAL mode with long polling.")
+            await init_pool()
+            await bot.delete_webhook(drop_pending_updates=True)
+            logger.success("Bot started")
+            await dp.start_polling(bot)
+        else:
+            logger.info("Running in PROD mode with webhooks.")
+            app = web.Application()
+            webhook_request_handler = SimpleRequestHandler(
+                dispatcher=dp, bot=bot, secret_token=settings.WEBHOOK_SECRET
+            )
+            webhook_request_handler.register(app, path=settings.WEBHOOK_PATH)
+            setup_application(app, dp, bot=bot)
 
-        logger.info("Running in LOCAL mode with long polling.")
-        await init_pool()
-        await bot.delete_webhook(drop_pending_updates=True)
-        logger.success("Bot started")
-        await dp.start_polling(bot)
+            runner = web.AppRunner(app)
+            await runner.setup()
+            site = web.TCPSite(runner, host=settings.WEBAPP_HOST, port=int(settings.WEBAPP_PORT))
+            await site.start()
+            logger.success(f"Server started at http://{settings.WEBAPP_HOST}:{settings.WEBAPP_PORT}")
 
-    else:
-        """
-        PRODUCTION ENV:
-          - Use aiohttp server and webhooks.
-        """
-        logger.info("Running in PROD mode with webhooks.")
-        # Create aiohttp web application
-        app = web.Application()
+            # Run forever
+            await asyncio.Event().wait()
+    except Exception as e:
+        # Log the exception with full traceback
+        logger.exception("Unhandled exception occurred during bot startup")
 
-        # Setup request handler for the webhook path
-        webhook_request_handler = SimpleRequestHandler(
-            dispatcher=dp, bot=bot, secret_token=settings.WEBHOOK_SECRET
+        # Format the traceback
+        tb = traceback.format_exc()
+        error_message = (
+            f"🚨 <b>Bot crashed with an exception</b>:\n\n"
+            f"<pre>{tb}</pre>"
         )
-        webhook_request_handler.register(app, path=settings.WEBHOOK_PATH)
 
-        # Setup application with dispatcher and bot
-        setup_application(app, dp, bot=bot)
-
-        # Setup background tasks
-        # app.on_startup.append(start_background_tasks)
-        # app.on_cleanup.append(cleanup_background_tasks)
-
-        # Finally run your aiohttp web server
-        # web.run_app(app, host=settings.WEBAPP_HOST, port=settings.WEBAPP_PORT)
+        # Send the error message to the admin
+        try:
+            await bot.send_message(
+                chat_id=231584958,
+                text=error_message,
+                parse_mode="HTML"
+            )
+        except Exception as notify_error:
+            logger.error(f"Failed to notify admin: {notify_error}")
+        raise  # Re-raise the exception to allow further handling if necessary
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except Exception as e:
+        logger.critical("Fatal error in main execution", exc_info=True)

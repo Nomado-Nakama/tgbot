@@ -204,3 +204,44 @@
 * 🗑️ Removed legacy and unnecessary `requirements.txt` in favor of consistent dependency management via `pyproject.toml`.
 
 ---
+
+Here is the changelog entry for version `0.1.0`, based on your provided diff:
+
+---
+
+## \[0.1.0] – 2025-06-02
+
+### Added
+
+* **Startup exception handling**
+
+  * Wrapped the entire bot startup sequence in a `try` block.
+  * Logs any unhandled exceptions with full traceback using `logger.exception(...)`.
+  * Sends a formatted error message to a Telegram admin (`chat_id=231584958`) if startup fails.
+  * Ensures that crashes in `main()` or webhook setup are surfaced and actionable.
+
+* **Webhook server bootstrap**
+
+  * Replaced unused `web.run_app(...)` with explicit setup via `AppRunner` and `TCPSite`:
+
+    * Manually starts `aiohttp` server on `WEBAPP_HOST:WEBAPP_PORT`.
+    * Logs successful startup URL with `logger.success(...)`.
+    * Keeps the server running via `await asyncio.Event().wait()`.
+
+### Changed
+
+* **Environment-based logic refactor**
+
+  * Reorganized `main.py` to clearly separate LOCAL (long polling) vs PROD (webhook server) behavior.
+  * All webhook logic moved under the `else:` block guarded by `RUNNING_ENV`.
+  * Local mode logs cleaner startup message and exits on exception.
+
+* **Logging improvements**
+
+  * Logs uncaught exceptions with a complete stack trace using `traceback.format_exc()`.
+  * On fatal crash, also logs with `logger.critical(..., exc_info=True)` in `__main__` block.
+
+### Notes
+
+* Makes production-ready error handling a first-class part of the bot lifecycle.
+* Admin alert ensures visibility for critical failures, especially during early deployments.
