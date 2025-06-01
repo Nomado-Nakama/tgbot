@@ -1,5 +1,5 @@
-from src.bot.keyboard import build_children_kb, ROOT_BACK_ID
 from src.bot.content_dao import Content
+from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
 
 def fake(id_: int, title: str) -> Content:

@@ -112,6 +112,7 @@
 
   * New module `google_doc_loader.py` fetches a Google Doc using a service account, parses text based on heading styles, and auto-populates the database with a hierarchical structure.
   * Heading structure levels:
+
     * `H1:` (countries)
     * `H2:` (topics)
     * `H3:` (questions)
@@ -165,5 +166,41 @@
 ### Removed
 
 * 🗑️ Deleted legacy `scripts/seed_demo.py` (and its `__init__.py`) which previously inserted static placeholder content.
+
+---
+
+## \[0.0.9] – 2025-06-01
+
+### Added
+
+* **Docker enhancements**
+
+  * Added `.dockerignore` to optimize Docker image builds by excluding unnecessary files.
+  * Defined explicit Docker network (`bot-network`) in `docker-compose.yaml` to improve inter-service communication.
+  * Included environment variable `PYTHONUNBUFFERED=1` in Dockerfile for real-time logging.
+  * Introduced automatic Alembic migrations (`alembic upgrade head`) to run at container startup via Docker Compose.
+  * Added `WEBHOOK_SECRET` to `.env.example` and `config.py` for webhook security.
+
+### Changed
+
+* **Dockerfile improvements**
+
+  * Switched from Alpine to Debian-based slim Python image (`python:3.12-slim-bookworm`) for enhanced compatibility.
+  * Updated UV installer method for reproducible setup.
+  * Improved clarity and maintainability of Dockerfile commands.
+
+* **Logging configuration**
+
+  * Adjusted `logger.py` to explicitly log to `sys.stdout` with queued logging for better container visibility.
+
+* **Project configuration**
+
+  * Added explicit `WEBHOOK_PATH` to `config.py` for webhook route management.
+  * Adjusted Alembic migration imports to comply with modern Python (`collections.abc`).
+
+### Removed
+
+* 🗑️ Deprecated Alpine-based Docker image (`python:3.12-alpine`).
+* 🗑️ Removed legacy and unnecessary `requirements.txt` in favor of consistent dependency management via `pyproject.toml`.
 
 ---

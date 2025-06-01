@@ -66,7 +66,7 @@ async def main():
         # app.on_cleanup.append(cleanup_background_tasks)
 
         # Finally run your aiohttp web server
-        web.run_app(app, host=settings.WEBAPP_HOST, port=settings.PORT)
+        # web.run_app(app, host=settings.WEBAPP_HOST, port=settings.WEBAPP_PORT)
 
 
 if __name__ == "__main__":

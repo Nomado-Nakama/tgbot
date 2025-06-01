@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 from loguru import logger
@@ -17,4 +18,4 @@ logger.add(
     level=LOG_LEVEL,
     enqueue=True,
 )
-logger.add(lambda m: print(m, end=""), level=LOG_LEVEL)  # pretty stdout
+logger.add(sys.stdout, level=LOG_LEVEL, enqueue=True)

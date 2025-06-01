@@ -14,6 +14,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks: [bot-network]
 
   bot:
     build: .
@@ -25,6 +26,11 @@ services:
     restart: always
     ports:
       - "${WEBAPP_PORT}:${WEBAPP_PORT}"
+    networks: [bot-network]
 
 volumes:
   db-data:
+
+networks:
+  bot-network:
+    external: false

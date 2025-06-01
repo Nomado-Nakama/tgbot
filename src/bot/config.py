@@ -15,8 +15,10 @@ class Settings(BaseSettings):
 
     RUNNING_ENV: str = "LOCAL"
     WEBHOOK_HOST: str = "http://localhost"
+    WEBHOOK_PATH: str = "/webhook"
     WEBAPP_HOST: str = "localhost"
     WEBAPP_PORT: str = "5001"
+    WEBHOOK_SECRET: str
 
     FULL_CONTENT_GOOGLE_DOCS_URL: str
     GOOGLE_SERVICE_ACCOUNT_BASE64: str
