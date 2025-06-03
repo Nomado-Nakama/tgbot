@@ -28,8 +28,6 @@ services:
       QDRANT_PORT: 6333
       POSTGRES_URL: postgresql://postgres:postgres@db/tgbot_nakama
     restart: always
-    volumes:
-      - ./src:/bot/src
     ports:
       - "${WEBAPP_PORT}:${WEBAPP_PORT}"
     networks: [bot-network]
