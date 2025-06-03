@@ -23,7 +23,7 @@ def upgrade() -> None:
         CREATE TABLE content (
             id         BIGSERIAL PRIMARY KEY,
             parent_id  BIGINT REFERENCES content(id) ON DELETE CASCADE,
-            title      TEXT NOT NULL,
+            title      VARCHAR(100) NOT NULL,
             body       TEXT,
             ord        INTEGER      DEFAULT 0,
             created_at TIMESTAMPTZ  DEFAULT now()
