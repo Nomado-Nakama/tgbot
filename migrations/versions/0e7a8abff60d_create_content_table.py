@@ -20,18 +20,16 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.execute(
         """
-        CREATE TABLE content (
-            id         BIGSERIAL PRIMARY KEY,
-            parent_id  BIGINT REFERENCES content(id) ON DELETE CASCADE,
-            title      VARCHAR(100) NOT NULL,
-            body       TEXT,
-            ord        INTEGER      DEFAULT 0,
-            created_at TIMESTAMPTZ  DEFAULT now()
-        );
-        CREATE INDEX idx_content_parent ON content(parent_id);
-    """
-    )
+        ALTER TABLE content
+            ALTER COLUMN title TYPE TEXT;
+    """)
 
 
 def downgrade() -> None:
-    op.execute("DROP TABLE IF EXISTS content CASCADE;")
+    # -- shrink the column back to VARCHAR(100)
+    op.execute("""
+    ALTER TABLE content
+        ALTER COLUMN title
+        TYPE VARCHAR(100)
+        USING LEFT(title, 100);
+    """)
