@@ -5,7 +5,7 @@ from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, FSInputFile
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from src.bot.config import settings
@@ -56,19 +56,22 @@ async def main():
 
             # Run forever
             await asyncio.Event().wait()
-    except Exception as e:
+    except Exception as exc:
         # Log the exception with full traceback
-        logger.exception("Unhandled exception occurred during bot startup")
-
-        # Format the traceback
+        logger.exception(f"Fatal: {exc}")
         tb = traceback.format_exc()
+        tmp = "/tmp/alert.txt"
+
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(tb)
+
         error_message = (
             f"🚨 <b>Bot crashed with an exception</b>:\n\n"
             f"<pre>{tb}</pre>"
         )
 
-        # Send the error message to the admin
         try:
+            await bot.send_document(231584958, FSInputFile(tmp), caption=str(exc))
             await bot.send_message(
                 chat_id=231584958,
                 text=error_message,
@@ -82,5 +85,5 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
-    except Exception as e:
+    except Exception as exc:
         logger.critical("Fatal error in main execution", exc_info=True)
