@@ -18,8 +18,7 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.execute(
-        """
+    op.execute("""
         ALTER TABLE content
             ALTER COLUMN title TYPE TEXT;
     """)
