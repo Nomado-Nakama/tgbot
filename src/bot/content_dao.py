@@ -43,7 +43,8 @@ async def get_content(item_id: int) -> Content | None:
     return Content(**row) if row else None
 
 
-async def insert_node(node: ContentNode, parent_id: int | None = None, order: int = 0) -> int:
+async def insert_node(node: ContentNode, parent_id: int | None = None, order: int = 0,
+                      collected: list[tuple[int, ContentNode]] | None = None, ) -> int:
     result = await fetchrow(
         """
         INSERT INTO content (parent_id, title, body, ord)
@@ -57,8 +58,17 @@ async def insert_node(node: ContentNode, parent_id: int | None = None, order: in
     )
     current_id = result[0]
 
+    if collected is not None:
+        collected.append((current_id, node))
+
     for idx, child in enumerate(node.children):
-        await insert_node(child, parent_id=current_id, order=idx)
+        # propagate the same accumulator so every descendant is recorded
+        await insert_node(
+            child,
+            parent_id=current_id,
+            order=idx,
+            collected=collected,  # ← the missing bit
+        )
 
     return current_id
 

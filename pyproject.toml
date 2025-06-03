@@ -3,7 +3,7 @@ name = "tgbot-nakama"
 version = "0.0.1"
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "aiogram>=3.20.0.post0",
     "alembic>=1.16.1",
@@ -13,6 +13,7 @@ dependencies = [
     "google-auth>=2.40.2",
     "google-auth-httplib2>=0.2.0",
     "google-auth-oauthlib>=1.2.2",
+    "huggingface-hub[hf-xet]>=0.32.3",
     "loguru>=0.7.3",
     "pre-commit>=4.2.0",
     "psycopg2-binary>=2.9.10",
@@ -21,11 +22,17 @@ dependencies = [
     "pytest>=8.3.5",
     "pytest-asyncio>=1.0.0",
     "python-dotenv>=1.1.0",
-    "qdrant-client>=1.14.2",
+    "qdrant-client[fastembed]>=1.14.2",
     "ruff>=0.11.12",
+    "sentence-transformers[onnx]>=4.1.0",
     "testcontainers[postgres]>=4.10.0",
+    "torch>=2.3.0",
 ]
 
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.black]
 line-length = 100
