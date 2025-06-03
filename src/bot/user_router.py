@@ -1,7 +1,7 @@
 """
 All *public* (non-admin) handlers live here.
 """
-
+from loguru import logger
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
@@ -92,9 +92,11 @@ async def cb_back(cb: CallbackQuery) -> None:
     await cb.answer()
 
 
-@router.message(~F.text.startswith("/"))
+@router.message()
 async def msg_search(msg: Message):
+    logger.info(f"Got msg: {msg.text} from {msg.from_user.username}...")
     async for item, score in search_content(msg.text):
+        logger.info(f"Found item: {item} score: {score}...")
         snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
         kb = InlineKeyboardMarkup(
             inline_keyboard=[

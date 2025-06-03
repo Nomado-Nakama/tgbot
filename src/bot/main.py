@@ -8,11 +8,11 @@ from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-from src.bot.config import settings
+from src.bot.config import settings, project_root_path
 from src.bot.db import fetchrow, init_pool
 from src.bot.google_doc_loader import reload_content_from_google_docx_to_db
 from src.bot.logger import logger
-from src.bot.qdrant_client import ensure_collection
+from src.bot.qdrant_high_level_client import ensure_collection
 from src.bot.user_router import router as user_router
 
 dp = Dispatcher()
@@ -28,11 +28,11 @@ async def ping(message: Message):
 
 
 async def main():
-    await ensure_collection()
-    await reload_content_from_google_docx_to_db()
     bot = Bot(settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
-
     try:
+        await ensure_collection()
+        await reload_content_from_google_docx_to_db()
+
         if settings.RUNNING_ENV == "LOCAL":
             logger.info("Running in LOCAL mode with long polling.")
             await init_pool()
@@ -60,7 +60,7 @@ async def main():
         # Log the exception with full traceback
         logger.exception(f"Fatal: {exc}")
         tb = traceback.format_exc()
-        tmp = "/tmp/alert.txt"
+        tmp = project_root_path / "alert.txt"
 
         with open(tmp, "w", encoding="utf-8") as fh:
             fh.write(tb)
@@ -86,4 +86,16 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as exc:
-        logger.critical("Fatal error in main execution", exc_info=True)
+        # Log the exception with full traceback
+        logger.exception(f"Fatal: {exc}")
+        tb = traceback.format_exc()
+        tmp = project_root_path / "alert.txt"
+
+        with open(tmp, "w", encoding="utf-8") as fh:
+            fh.write(tb)
+
+        error_message = (
+            f"🚨 <b>Bot crashed with an exception</b>:\n\n"
+            f"<pre>{tb}</pre>"
+        )
+        logger.info(error_message)

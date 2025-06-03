@@ -13,7 +13,7 @@ from src.bot.content_dao import (
     parse_google_doc_text_as_list_of_content_nodes,
     remove_all_content,
 )
-from src.bot.qdrant_client import client, QDRANT_COLLECTION
+from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
 
 
 def load_google_doc(doc_id: str) -> str:

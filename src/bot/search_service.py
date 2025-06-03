@@ -1,16 +1,23 @@
-from src.bot.embeddings import generate_embedding
-from src.bot.qdrant_client import client, QDRANT_COLLECTION
+from loguru import logger
+
 from src.bot.content_dao import get_content
-from qdrant_client.http.models import SearchRequest
+from src.bot.embeddings import generate_embedding
+from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
 
 
-async def search_content(query: str, top_k: int = 3):
+async def search_content(query: str, top_k: int = 1):
+    logger.info(f"Creating embedding for query: {query}")
     vector = await generate_embedding(query)
+    logger.info(f"Got vector with {len(vector)} dimensions for query: {query}")
     hits = await client.search(
         collection_name=QDRANT_COLLECTION,
-        search_request=SearchRequest(vector=vector, limit=top_k, with_payload=True),
+        query_vector=vector,
+        limit=top_k,
+        with_payload=True
     )
+
     for hit in hits:
         item = await get_content(int(hit.id))
+        logger.info(f"item: {item} for hit_id: {hit.id} for query: {query}")
         if item:
             yield item, hit.score
