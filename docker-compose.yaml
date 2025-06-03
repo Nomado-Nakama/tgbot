@@ -23,13 +23,32 @@ services:
         condition: service_healthy
     env_file:
       - ./.env
+    environment:
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: 6333
+      POSTGRES_URL: postgresql://postgres:postgres@db/tgbot_nakama
     restart: always
     ports:
       - "${WEBAPP_PORT}:${WEBAPP_PORT}"
     networks: [bot-network]
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"  # REST API
+    volumes:
+      - qdrant-data:/qdrant/storage
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:6333/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [ bot-network ]
+
 volumes:
   db-data:
+  qdrant-data:
 
 networks:
   bot-network:
