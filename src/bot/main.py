@@ -12,6 +12,7 @@ from src.bot.config import settings
 from src.bot.db import fetchrow, init_pool
 from src.bot.google_doc_loader import reload_content_from_google_docx_to_db
 from src.bot.logger import logger
+from src.bot.qdrant_client import ensure_collection
 from src.bot.user_router import router as user_router
 
 dp = Dispatcher()
@@ -27,6 +28,7 @@ async def ping(message: Message):
 
 
 async def main():
+    await ensure_collection()
     await reload_content_from_google_docx_to_db()
     bot = Bot(settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
 

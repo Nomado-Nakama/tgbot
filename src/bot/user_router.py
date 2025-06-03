@@ -4,10 +4,12 @@ All *public* (non-admin) handlers live here.
 
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 
+from src.bot.search_service import search_content
 from src.bot.content_dao import get_children, get_content
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
+
 
 router = Router(name="user")
 
@@ -52,7 +54,7 @@ async def cb_open(cb: CallbackQuery) -> None:
     else:  # leaf
         # Split long text (TG limit 4096)
         body = item.body or "…"
-        chunks = [body[i : i + 4000] for i in range(0, len(body), 4000)]
+        chunks = [body[i: i + 4000] for i in range(0, len(body), 4000)]
         await cb.message.edit_text(
             chunks[0],
             reply_markup=build_children_kb([], parent_id=item.parent_id),
@@ -88,3 +90,18 @@ async def cb_back(cb: CallbackQuery) -> None:
         ),
     )
     await cb.answer()
+
+
+@router.message(~F.text.startswith("/"))
+async def msg_search(msg: Message):
+    async for item, score in search_content(msg.text):
+        snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="📖 Читать полностью", callback_data=f"open_{item.id}")]
+            ]
+        )
+        await msg.answer(
+            f"🔎 <b>{item.title}</b>\n<i>Relevance: {score:.2f}</i>\n\n{snippet}",
+            reply_markup=kb,
+        )
