@@ -18,6 +18,7 @@ services:
 
   bot:
     build: .
+    mem_limit: 3g
     depends_on:
       db:
         condition: service_healthy
@@ -27,7 +28,7 @@ services:
       QDRANT_HOST: qdrant
       QDRANT_PORT: 6333
       POSTGRES_URL: postgresql://postgres:postgres@db/tgbot_nakama
-    restart: always
+    restart: unless-stopped
     ports:
       - "${WEBAPP_PORT}:${WEBAPP_PORT}"
     networks: [bot-network]
