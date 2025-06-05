@@ -29,6 +29,7 @@ async def ping(message: Message):
 
 async def main():
     bot = Bot(settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+
     try:
         await ensure_collection()
         await reload_content_from_google_docx_to_db()
@@ -70,6 +71,7 @@ async def main():
             f"<pre>{tb}</pre>"
         )
 
+        # Send the error message to the admin
         try:
             await bot.send_document(231584958, FSInputFile(tmp), caption=str(exc))
             await bot.send_message(

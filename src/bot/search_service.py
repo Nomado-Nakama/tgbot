@@ -13,7 +13,7 @@ async def search_content(query: str, top_k: int = 1):
         collection_name=QDRANT_COLLECTION,
         query_vector=vector,
         limit=top_k,
-        search_params={"hnsw_ef": 64},
+        search_params={"hnsw_ef": 128},
     )
 
     for hit in hits:

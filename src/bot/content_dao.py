@@ -28,6 +28,24 @@ class Content:
 _SEL = "id, parent_id, title, body, ord"
 
 
+async def get_breadcrumb(item_id: int) -> list[Content]:
+    """
+    Возвращает список объектов Content,
+    начиная с корня и заканчивая `item_id`.
+    """
+    chain: list[Content] = []
+
+    current_id: int | None = item_id
+    while current_id is not None:
+        item = await get_content(current_id)
+        if item is None:
+            break
+        chain.append(item)
+        current_id = item.parent_id
+
+    return list(reversed(chain))
+
+
 async def get_children(parent: int | None) -> list[Content]:
     rows = await fetch(
         f"SELECT {_SEL} FROM content "
@@ -74,19 +92,14 @@ async def insert_node(node: ContentNode, parent_id: int | None = None, order: in
 
 
 async def remove_all_content() -> int:
-    result = await execute(
-        """
-        DELETE FROM content;
-        """,
-    )
-
-    return result
+    return await execute("DELETE FROM content;")
 
 
 def parse_google_doc_text_as_list_of_content_nodes(raw: str) -> list[ContentNode]:
     lines = raw.splitlines()
     nodes: list[ContentNode] = []
     node_stack: list[tuple[int, ContentNode]] = []  # (level, node)
+    current_leaf: ContentNode | None = None
 
     def detect_level(text: str) -> int:
         # Use style markers inserted by load_google_doc via paragraph style mapping
@@ -96,9 +109,9 @@ def parse_google_doc_text_as_list_of_content_nodes(raw: str) -> list[ContentNode
             return 2
         elif "H3:" in text:
             return 3
-        return 4  # regular body text
-
-    current_leaf: ContentNode | None = None
+        if "H4:" in text:
+            return 4
+        return 5  # body
 
     for line in lines:
         line = line.strip()
@@ -106,7 +119,7 @@ def parse_google_doc_text_as_list_of_content_nodes(raw: str) -> list[ContentNode
             continue
 
         # H1:/H2:/H3: are inserted by load_google_doc via paragraph style mapping
-        if any(line.startswith(prefix) for prefix in ["H1:", "H2:", "H3:"]):
+        if any(line.startswith(prefix) for prefix in ["H1:", "H2:", "H3:", "H4:"]):
             level = detect_level(line)
             clean_line = line.split(":", 1)[1].strip()
             node = ContentNode(level=str(level), title=clean_line)
@@ -121,17 +134,14 @@ def parse_google_doc_text_as_list_of_content_nodes(raw: str) -> list[ContentNode
                 nodes.append(node)
 
             node_stack.append((level, node))
-            if level == 3:
-                current_leaf = node
-            else:
-                current_leaf = None
+            current_leaf = node if level >= 3 else None
 
         else:
-            # Treat as body text linked to last H3
             if current_leaf:
-                if current_leaf.body is None:
-                    current_leaf.body = line
-                else:
-                    current_leaf.body += "\n" + line
+                current_leaf.body = (
+
+                    line if current_leaf.body is None else f"{current_leaf.body}\n{line}"
+
+                )
 
     return nodes

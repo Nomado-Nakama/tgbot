@@ -1,42 +1,41 @@
-"""
-All *public* (non-admin) handlers live here.
-"""
 from loguru import logger
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from src.bot.search_service import search_content
-from src.bot.content_dao import get_children, get_content
+
+from src.bot.content_dao import get_children, get_content, get_breadcrumb
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
 
 router = Router(name="user")
 
-# ────────────────────────────────────────────────
-# /start /help
-# ────────────────────────────────────────────────
+
 WELCOME = (
     "👋 Привет!\n"
     "Используй кнопки ниже, чтобы найти нужную информацию.\n"
-    "Команда /help покажет эту подсказку ещё раз."
+    "Команда /menu покажет выбор стран."
+    "Напиши интересующий тебя вопрос текстом, "
+    "а мы попробуем найти наиболее подходящий ответ."
 )
+
+
+def format_breadcrumb(items) -> str:
+    return " › ".join(i.title for i in items)
 
 
 @router.message(CommandStart())
 async def cmd_start(msg: Message) -> None:
-    roots = await get_children(None)
-    await msg.answer(WELCOME, reply_markup=build_children_kb(roots, parent_id=None))
+    await msg.answer(WELCOME)
 
 
-@router.message(Command("help"))
+@router.message(Command("menu"))
 async def cmd_help(msg: Message) -> None:
-    await cmd_start(msg)  # same output
+    roots = await get_children(None)
+    await msg.answer("Меню:", reply_markup=build_children_kb(roots, parent_id=None))
 
 
-# ────────────────────────────────────────────────
-# Navigation callbacks
-# ────────────────────────────────────────────────
 @router.callback_query(F.data.startswith("open_"))
 async def cb_open(cb: CallbackQuery) -> None:
     item_id = int(cb.data.removeprefix("open_"))
@@ -45,10 +44,13 @@ async def cb_open(cb: CallbackQuery) -> None:
         await cb.answer("⚠️ Запись не найдена.", show_alert=True)
         return
 
+    breadcrumb_items = await get_breadcrumb(item_id)
+    breadcrumb = format_breadcrumb(breadcrumb_items)
+
     children = await get_children(item.id)
     if children:  # category
         await cb.message.edit_text(
-            f"📂 <b>{item.title}</b>",
+            f"📂 <b>{breadcrumb}</b>",
             reply_markup=build_children_kb(children, parent_id=item.parent_id),
         )
     else:  # leaf
@@ -56,7 +58,7 @@ async def cb_open(cb: CallbackQuery) -> None:
         body = item.body or "…"
         chunks = [body[i: i + 4000] for i in range(0, len(body), 4000)]
         await cb.message.edit_text(
-            chunks[0],
+            f"<b>{breadcrumb}</b>\n\n{chunks[0]}",
             reply_markup=build_children_kb([], parent_id=item.parent_id),
         )
         # optional follow-ups
@@ -95,8 +97,11 @@ async def cb_back(cb: CallbackQuery) -> None:
 @router.message()
 async def msg_search(msg: Message):
     logger.info(f"Got msg: {msg.text} from {msg.from_user.username}...")
-    search_results = search_content(msg.text, top_k=3)
+    search_results = search_content(msg.text, top_k=1)
     async for item, score in search_results:
+        breadcrumb_items = await get_breadcrumb(item.id)
+        breadcrumb = format_breadcrumb(breadcrumb_items)
+
         logger.info(f"Found item: {item} score: {score}...")
         snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
         kb = InlineKeyboardMarkup(
@@ -105,7 +110,7 @@ async def msg_search(msg: Message):
             ]
         )
         await msg.answer(
-            f"🔎 <b>{item.title}</b>\n<i>Relevance: {score:.2f}</i>\n\n{snippet}",
+            f"🔎 <b>{breadcrumb}</b>\n\n{snippet}",
             reply_markup=kb,
         )
 
