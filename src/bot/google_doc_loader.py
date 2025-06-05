@@ -7,13 +7,13 @@ from loguru import logger
 
 
 from src.bot.config import settings
-# from src.bot.embeddings import generate_embedding
+from src.bot.embeddings import generate_embedding
 from src.bot.content_dao import (
     insert_node,
     parse_google_doc_text_as_list_of_content_nodes,
     remove_all_content,
 )
-# from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
+from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
 
 
 def load_google_doc(doc_id: str) -> str:
@@ -72,17 +72,17 @@ async def reload_content_from_google_docx_to_db():
     for i, node in enumerate(top_nodes):
         content_id = await insert_node(node, parent_id=None, order=i)
         logger.info(f"📥 {content_id} inserted into DB...")
-        # if node.body:
-        #     vector = await generate_embedding(node.body)
-        #     await client.upsert(
-        #         collection_name=QDRANT_COLLECTION,
-        #         points=[
-        #             {
-        #                 "id": content_id,
-        #                 "vector": vector,
-        #                 "payload": {"title": node.title},
-        #             }
-        #         ],
-        #     )
+        if node.body:
+            vector = await generate_embedding(node.body)
+            await client.upsert(
+                collection_name=QDRANT_COLLECTION,
+                points=[
+                    {
+                        "id": content_id,
+                        "vector": vector,
+                        "payload": {"title": node.title},
+                    }
+                ],
+            )
 
     logger.info("✅ All content nodes inserted...")
