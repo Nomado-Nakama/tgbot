@@ -6,16 +6,21 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from loguru import logger
 
+
 from src.bot.config import settings
+
 from src.bot.embeddings import generate_embeddings
+
 from src.bot.content_dao import (
     insert_node,
     parse_google_doc_text_as_list_of_content_nodes,
     remove_all_content,
     ContentNode,
 )
+
 from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
 from qdrant_client.http.models import PointStruct
+
 
 
 def load_google_doc(doc_id: str) -> str:
