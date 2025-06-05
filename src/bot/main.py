@@ -13,6 +13,7 @@ from src.bot.db import fetchrow, init_pool
 from src.bot.google_doc_loader import reload_content_from_google_docx_to_db
 from src.bot.logger import logger
 from src.bot.qdrant_high_level_client import ensure_collection
+
 from src.bot.user_router import router as user_router
 
 dp = Dispatcher()

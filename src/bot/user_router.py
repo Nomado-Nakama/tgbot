@@ -7,6 +7,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from src.bot.search_service import search_content
+
 from src.bot.content_dao import get_children, get_content
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
@@ -90,7 +91,6 @@ async def cb_back(cb: CallbackQuery) -> None:
         ),
     )
     await cb.answer()
-
 
 @router.message()
 async def msg_search(msg: Message):
