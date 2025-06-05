@@ -1,12 +1,13 @@
 """
 All *public* (non-admin) handlers live here.
 """
-# from loguru import logger
+from loguru import logger
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import CallbackQuery, Message  # , InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 
-# from src.bot.search_service import search_content
+from src.bot.search_service import search_content
+
 from src.bot.content_dao import get_children, get_content
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
@@ -91,19 +92,22 @@ async def cb_back(cb: CallbackQuery) -> None:
     )
     await cb.answer()
 
+@router.message()
+async def msg_search(msg: Message):
+    logger.info(f"Got msg: {msg.text} from {msg.from_user.username}...")
+    search_results = search_content(msg.text, top_k=3)
+    async for item, score in search_results:
+        logger.info(f"Found item: {item} score: {score}...")
+        snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="📖 Читать полностью", callback_data=f"open_{item.id}")]
+            ]
+        )
+        await msg.answer(
+            f"🔎 <b>{item.title}</b>\n<i>Relevance: {score:.2f}</i>\n\n{snippet}",
+            reply_markup=kb,
+        )
 
-# @router.message()
-# async def msg_search(msg: Message):
-#     logger.info(f"Got msg: {msg.text} from {msg.from_user.username}...")
-#     async for item, score in search_content(msg.text):
-#         logger.info(f"Found item: {item} score: {score}...")
-#         snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
-#         kb = InlineKeyboardMarkup(
-#             inline_keyboard=[
-#                 [InlineKeyboardButton(text="📖 Читать полностью", callback_data=f"open_{item.id}")]
-#             ]
-#         )
-#         await msg.answer(
-#             f"🔎 <b>{item.title}</b>\n<i>Relevance: {score:.2f}</i>\n\n{snippet}",
-#             reply_markup=kb,
-#         )
+    if not search_results:
+        await msg.answer("Ничего не найдено 😕")

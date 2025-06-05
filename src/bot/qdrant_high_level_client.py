@@ -10,7 +10,7 @@ QDRANT_COLLECTION = "content_vectors"
 _VECTOR_SIZE = 384
 
 client = AsyncQdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT,
-                           prefer_grpc=False, timeout=30, **{"check_compatibility": False})
+                           prefer_grpc=True, timeout=30, **{"check_compatibility": False})
 
 
 async def ensure_collection():
@@ -26,12 +26,18 @@ async def ensure_collection():
         raise RuntimeError("Qdrant never became ready")
 
     logger.info(f"Qdrant info: {info}...")
-    if await client.collection_exists(collection_name=QDRANT_COLLECTION):
+    if not await client.collection_exists(collection_name=QDRANT_COLLECTION):
+        logger.info(f"creating fresh QDRANT_COLLECTION: {QDRANT_COLLECTION}...")
+        await client.create_collection(
+            collection_name=QDRANT_COLLECTION,
+            vectors_config=VectorParams(size=_VECTOR_SIZE, distance=Distance.COSINE),
+        )
+    else:
         logger.info(f"QDRANT_COLLECTION: {QDRANT_COLLECTION} exists...")
-        logger.info(f"dropping QDRANT_COLLECTION: {QDRANT_COLLECTION}...")
-        await client.delete_collection(QDRANT_COLLECTION)
-    logger.info(f"creating fresh QDRANT_COLLECTION: {QDRANT_COLLECTION}...")
-    await client.create_collection(
-        collection_name=QDRANT_COLLECTION,
-        vectors_config=VectorParams(size=_VECTOR_SIZE, distance=Distance.COSINE),
-    )
+        await client.delete_collection(
+            collection_name=QDRANT_COLLECTION
+        )
+        await client.create_collection(
+            collection_name=QDRANT_COLLECTION,
+            vectors_config=VectorParams(size=_VECTOR_SIZE, distance=Distance.COSINE),
+        )

@@ -245,3 +245,61 @@ Here is the changelog entry for version `0.1.0`, based on your provided diff:
 
 * Makes production-ready error handling a first-class part of the bot lifecycle.
 * Admin alert ensures visibility for critical failures, especially during early deployments.
+
+## [0.2.0] – 2025-06-05
+
+### Added
+- **🔍 Semantic search stack**
+  * Integrated **Qdrant** as a vector-database (`qdrant_high_level_client.py`, `search_service.py`).
+  * Free-text queries now handled in `user_router.py`; returns the top-3 semantically-relevant answers with a “📖 Читать полностью” button.
+
+- **🧠 Multilingual embeddings**
+  * New `embeddings.py` uses `intfloat/multilingual-e5-small` (ONNX, CPU); warmed up in a thread-pool for fast inference.
+  * Dockerfile pre-downloads the model to keep first-run latency near zero.
+
+- **⚡ Automated vector ingestion**
+  * `google_doc_loader.py` now:
+    1. Parses the Google Doc as before.
+    2. Generates embeddings for every node (`title + body`).
+    3. Upserts them to Qdrant with payload `{title, has_body}`.
+
+- **🐳 Docker & Compose**
+  * Added dedicated **`qdrant`** service + `qdrant-data` volume.
+  * `bot` service now passes `QDRANT_HOST` / `QDRANT_PORT` and updated `POSTGRES_URL`.
+  * `.gitignore` excludes `docker-compose.override.yaml`.
+
+- **📦 Dependencies / runtime**
+  * Added `torch`, `sentence-transformers[onnx]`, `qdrant-client[fastembed]`, `huggingface-hub[hf-xet]`.
+  * Extra PyPI index for CPU-only PyTorch wheels.
+  * Lowered minimum Python to **3.11** for ONNX compatibility.
+
+- **🛠️ DB migrations**
+  * New alembic revision `2df6976e3c09_title_to_text` – `content.title` widened from `VARCHAR(100)` to `TEXT`.
+
+- **🔔 Robust startup diagnostics**
+  * `main.py` now ensures the Qdrant collection exists before loading content.
+  * On critical failure the full traceback is written to `alert.txt` **and** sent to the admin as a file.
+
+### Changed
+- `insert_node()` now accepts a `collected` accumulator, letting the loader gather **all** inserted nodes in one pass.
+- `logger.py` resolves `LOG_PATH` relative to `project_root_path` (fixes missing-logs in Docker).
+- Dockerfile exposes new optional tuning envs (`OMP_NUM_THREADS`, `MKL_NUM_THREADS`, `TRANSFORMERS_OFFLINE`).
+
+### Removed / Deprecated
+- None.
+
+### Breaking changes
+1. A running **Qdrant** instance is now required.  
+   → Run `docker compose up qdrant postgres` before launching the bot.
+2. Embedding model is now loaded **offline** from disk.  
+   → You must pre-download `intfloat/multilingual-e5-small` and place it in `src/models/intfloat/multilingual-e5-small`.  
+     Use `transformers-cli` or run the model loader once with internet access:
+   ```python
+   from sentence_transformers import SentenceTransformer
+   model = SentenceTransformer("intfloat/multilingual-e5-small")
+   model.save("./src/models/intfloat/multilingual-e5-small")
+   ```
+3. Alembic migration required:
+   ```bash
+   alembic upgrade head
+   ```
