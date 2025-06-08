@@ -28,6 +28,24 @@ class Content:
 _SEL = "id, parent_id, title, body, ord"
 
 
+async def get_breadcrumb(item_id: int) -> list[Content]:
+    """
+    Возвращает список объектов Content,
+    начиная с корня и заканчивая `item_id`.
+    """
+    chain: list[Content] = []
+
+    current_id: int | None = item_id
+    while current_id is not None:
+        item = await get_content(current_id)
+        if item is None:
+            break
+        chain.append(item)
+        current_id = item.parent_id
+
+    return list(reversed(chain))
+
+
 async def get_children(parent: int | None) -> list[Content]:
     rows = await fetch(
         f"SELECT {_SEL} FROM content "

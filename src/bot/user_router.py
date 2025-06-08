@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKe
 
 from src.bot.search_service import search_content
 
-from src.bot.content_dao import get_children, get_content
+from src.bot.content_dao import get_children, get_content, get_breadcrumb
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
 
@@ -19,6 +19,10 @@ WELCOME = (
     "Напиши интересующий тебя вопрос текстом, "
     "а мы попробуем найти наиболее подходящий ответ."
 )
+
+
+def format_breadcrumb(items) -> str:
+    return " › ".join(i.title for i in items)
 
 
 @router.message(CommandStart())
@@ -40,10 +44,13 @@ async def cb_open(cb: CallbackQuery) -> None:
         await cb.answer("⚠️ Запись не найдена.", show_alert=True)
         return
 
+    breadcrumb_items = await get_breadcrumb(item_id)
+    breadcrumb = format_breadcrumb(breadcrumb_items)
+
     children = await get_children(item.id)
     if children:  # category
         await cb.message.edit_text(
-            f"📂 <b>{item.title}</b>",
+            f"📂 <b>{breadcrumb}</b>",
             reply_markup=build_children_kb(children, parent_id=item.parent_id),
         )
     else:  # leaf
@@ -51,7 +58,7 @@ async def cb_open(cb: CallbackQuery) -> None:
         body = item.body or "…"
         chunks = [body[i: i + 4000] for i in range(0, len(body), 4000)]
         await cb.message.edit_text(
-            chunks[0],
+            f"<b>{breadcrumb}</b>\n\n{chunks[0]}",
             reply_markup=build_children_kb([], parent_id=item.parent_id),
         )
         # optional follow-ups
@@ -92,6 +99,9 @@ async def msg_search(msg: Message):
     logger.info(f"Got msg: {msg.text} from {msg.from_user.username}...")
     search_results = search_content(msg.text, top_k=1)
     async for item, score in search_results:
+        breadcrumb_items = await get_breadcrumb(item.id)
+        breadcrumb = format_breadcrumb(breadcrumb_items)
+
         logger.info(f"Found item: {item} score: {score}...")
         snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
         kb = InlineKeyboardMarkup(
@@ -100,7 +110,7 @@ async def msg_search(msg: Message):
             ]
         )
         await msg.answer(
-            f"🔎 <b>{item.title}</b>\n\n{snippet}",
+            f"🔎 <b>{breadcrumb}</b>\n\n{snippet}",
             reply_markup=kb,
         )
 
