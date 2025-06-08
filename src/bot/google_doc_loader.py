@@ -1,11 +1,12 @@
-import base64
 import json
+import base64
+from html import escape
 from time import perf_counter
+from typing import Iterable
 
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from loguru import logger
-
 
 from src.bot.config import settings
 
@@ -21,6 +22,33 @@ from src.bot.content_dao import (
 from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
 from qdrant_client.http.models import PointStruct
 
+_HTML_SAFE_RUN_KEYS = ("bold", "italic", "underline", "strikethrough")
+
+
+def _run_to_html(run: dict) -> str:
+    """Convert one Docs textRun to Telegram-safe HTML."""
+    txt = escape(run.get("content", ""))
+    style = run.get("textStyle", {})
+
+    if style.get("bold"):
+        txt = f"<b>{txt}</b>"
+    if style.get("italic"):
+        txt = f"<i>{txt}</i>"
+    if style.get("underline"):
+        txt = f"<u>{txt}</u>"
+    if style.get("strikethrough"):
+        txt = f"<s>{txt}</s>"
+
+    link = style.get("link", {}).get("url")
+    if link:
+        txt = f'<a href="{escape(link)}">{txt}</a>'
+
+    return txt
+
+
+def _elements_to_html(elems: Iterable[dict]) -> str:
+    """Join all runs of the paragraph preserving formatting."""
+    return "".join(_run_to_html(run) for run in elems if run.get("textRun"))
 
 
 def load_google_doc(doc_id: str) -> str:
@@ -33,7 +61,7 @@ def load_google_doc(doc_id: str) -> str:
     document = service.documents().get(documentId=doc_id).execute()
 
     result_lines: list[str] = []
-    heading_counter = {"H1": 0, "H2": 0, "H3": 0}
+    heading_counter = {"H1": 0, "H2": 0, "H3": 0, "H4": 0}
 
     for elem in document.get("body", {}).get("content", []):
         para = elem.get("paragraph")
@@ -48,23 +76,22 @@ def load_google_doc(doc_id: str) -> str:
             prefix, heading_counter["H2"] = "H2:", heading_counter["H2"] + 1
         elif style == "HEADING_3":
             prefix, heading_counter["H3"] = "H3:", heading_counter["H3"] + 1
+        elif style == "HEADING_4":
+            prefix, heading_counter["H4"] = "H4:", heading_counter["H4"] + 1
 
-        line = "".join(
-            t_run.get("content", "")
-            for elem in para.get("elements", [])
-            if (t_run := elem.get("textRun"))
-        ).strip()
+        line = _elements_to_html(para.get("elements", [])).strip()
 
         if line:
             result_lines.append(f"{prefix}{line}" if prefix else line)
 
     logger.debug(
-        "Google Doc fetched in {:.2f}s ─ {} lines (H1 {}, H2 {}, H3 {})",
+        "Google Doc fetched in {:.2f}s — {} lines (H1 {}, H2 {}, H3 {}, H4 {})",
         perf_counter() - t0,
         len(result_lines),
-        heading_counter['H1'],
-        heading_counter['H2'],
-        heading_counter['H3'],
+        heading_counter["H1"],
+        heading_counter["H2"],
+        heading_counter["H3"],
+        heading_counter["H4"],
     )
     return "\n".join(result_lines)
 
