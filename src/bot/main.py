@@ -10,13 +10,14 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 
 from src.bot.config import settings, project_root_path
 from src.bot.db import fetchrow, init_pool
-from src.bot.google_doc_loader import reload_content_from_google_docx_to_db
+from src.bot.google_doc_loader import GoogleDocLoader
 from src.bot.logger import logger
 from src.bot.qdrant_high_level_client import ensure_collection
 from src.bot.user_router import router as user_router
 
 dp = Dispatcher()
 dp.include_router(user_router)
+gdl = GoogleDocLoader()
 
 
 @dp.message(Command("ping"))
@@ -32,7 +33,7 @@ async def main():
 
     try:
         await ensure_collection()
-        await reload_content_from_google_docx_to_db()
+        await gdl.reload_content_from_google_docx_to_db()
 
         if settings.RUNNING_ENV == "LOCAL":
             logger.info("Running in LOCAL mode with long polling.")
