@@ -134,8 +134,7 @@ def parse_google_doc_text_as_list_of_content_nodes(raw: str) -> list[ContentNode
                 nodes.append(node)
 
             node_stack.append((level, node))
-            current_leaf = node if level == 4 else None
-
+            current_leaf = node if level >= 3 else None
 
         else:
             if current_leaf:
