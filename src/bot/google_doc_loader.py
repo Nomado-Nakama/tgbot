@@ -47,8 +47,19 @@ def _run_to_html(run: dict) -> str:
 
 
 def _elements_to_html(elems: Iterable[dict]) -> str:
-    """Join all runs of the paragraph preserving formatting."""
-    return "".join(_run_to_html(run) for run in elems if run.get("textRun"))
+    """
+    Join all paragraph elements into one HTML string.
+
+    NB: `elems` is a list of *ParagraphElement* objects; each element may or
+    may not contain a "textRun".  We need the inner dict, not the wrapper.
+    """
+    parts: list[str] = []
+    for el in elems:
+        text_run = el.get("textRun")
+        if not text_run:  # skip images, page-breaks, etc.
+            continue
+        parts.append(_run_to_html(text_run))
+    return "".join(parts)
 
 
 def load_google_doc(doc_id: str) -> str:
