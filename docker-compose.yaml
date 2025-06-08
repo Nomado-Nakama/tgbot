@@ -18,8 +18,9 @@ services:
 
   bot:
     build: .
-    mem_limit: 13g
-    memswap_limit: 13g
+    cpus: "2.0"
+    mem_limit: 9g
+    memswap_limit: 9g
     depends_on:
       db:
         condition: service_healthy
