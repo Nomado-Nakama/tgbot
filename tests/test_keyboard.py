@@ -3,7 +3,7 @@ from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
 
 def fake(id_: int, title: str) -> Content:
-    return Content(id=id_, parent_id=None, title=title, body=None, ord=0)
+    return Content(id=id_, parent_id=None, title=title, body=None, ord=0, text_digest="", embedded_at=None)
 
 
 def test_build_root_kb():

@@ -114,7 +114,9 @@ async def msg_search(msg: Message):
         breadcrumb = _clean_for_btn(format_breadcrumb(breadcrumb_items))
 
         logger.info(f"Found item: {item} score: {score}...")
-        snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
+        raw_body = item.body or ""
+        safe_body = safe_html(raw_body)
+        snippet = split_html_safe(safe_body, 400)[0]
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="📖 Читать полностью", callback_data=f"open_{item.id}")]

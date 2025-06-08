@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from src.bot.db import execute, fetch, fetchrow
 
@@ -23,9 +24,11 @@ class Content:
     title: str
     body: str | None
     ord: int
+    text_digest: str           # new
+    embedded_at: datetime | None
 
 
-_SEL = "id, parent_id, title, body, ord"
+_SEL = "id, parent_id, title, body, ord, text_digest, embedded_at"
 
 
 async def get_breadcrumb(item_id: int) -> list[Content]:
