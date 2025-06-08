@@ -6,7 +6,8 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKe
 from src.bot.search_service import search_content
 
 from src.bot.content_dao import get_children, get_content, get_breadcrumb
-from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
+from src.bot.keyboard import ROOT_BACK_ID, build_children_kb, _clean_for_btn
+from src.bot.utils_html import safe_html, split_html_safe
 
 
 router = Router(name="user")
@@ -22,7 +23,8 @@ WELCOME = (
 
 
 def format_breadcrumb(items) -> str:
-    return " › ".join(i.title for i in items)
+    from html import escape
+    return " › ".join(escape(i.title, quote=False) for i in items)
 
 
 @router.message(CommandStart())
@@ -33,7 +35,11 @@ async def cmd_start(msg: Message) -> None:
 @router.message(Command("menu"))
 async def cmd_help(msg: Message) -> None:
     roots = await get_children(None)
-    await msg.answer("Меню:", reply_markup=build_children_kb(roots, parent_id=None))
+    await msg.answer(
+        "Меню:",
+        reply_markup=build_children_kb(roots, parent_id=None),
+        disable_web_page_preview=True
+    )
 
 
 @router.callback_query(F.data.startswith("open_"))
@@ -45,21 +51,23 @@ async def cb_open(cb: CallbackQuery) -> None:
         return
 
     breadcrumb_items = await get_breadcrumb(item_id)
-    breadcrumb = format_breadcrumb(breadcrumb_items)
+    breadcrumb = _clean_for_btn(format_breadcrumb(breadcrumb_items))
 
     children = await get_children(item.id)
     if children:  # category
         await cb.message.edit_text(
             f"📂 <b>{breadcrumb}</b>",
             reply_markup=build_children_kb(children, parent_id=item.parent_id),
+            disable_web_page_preview=True
         )
     else:  # leaf
         # Split long text (TG limit 4096)
-        body = item.body or "…"
-        chunks = [body[i: i + 4000] for i in range(0, len(body), 4000)]
+        body = safe_html(item.body or "…")
+        chunks = split_html_safe(body, max_len=3800)
         await cb.message.edit_text(
             f"<b>{breadcrumb}</b>\n\n{chunks[0]}",
             reply_markup=build_children_kb([], parent_id=item.parent_id),
+            disable_web_page_preview=True
         )
         # optional follow-ups
         for chunk in chunks[1:]:
@@ -74,6 +82,7 @@ async def cb_home(cb: CallbackQuery) -> None:
     await cb.message.edit_text(
         "🏠 <b>Главное меню</b>",
         reply_markup=build_children_kb(roots, parent_id=None),
+        disable_web_page_preview=True
     )
     await cb.answer()
 
@@ -83,13 +92,15 @@ async def cb_back(cb: CallbackQuery) -> None:
     parent_id = int(cb.data.removeprefix("back_"))
     siblings = await get_children(parent_id)
     parent_obj = await get_content(parent_id) if parent_id else None
-    title = parent_obj.title if parent_obj else "Главное меню"
+    breadcrumb_items = await get_breadcrumb(parent_id)
+    breadcrumb = _clean_for_btn(format_breadcrumb(breadcrumb_items))
     await cb.message.edit_text(
-        f"📂 <b>{title}</b>",
+        f"📂 <b>{breadcrumb}</b>",
         reply_markup=build_children_kb(
             siblings,
             parent_id=parent_obj.parent_id if parent_obj else None,
         ),
+        disable_web_page_preview=True
     )
     await cb.answer()
 
@@ -100,7 +111,7 @@ async def msg_search(msg: Message):
     search_results = search_content(msg.text, top_k=1)
     async for item, score in search_results:
         breadcrumb_items = await get_breadcrumb(item.id)
-        breadcrumb = format_breadcrumb(breadcrumb_items)
+        breadcrumb = _clean_for_btn(format_breadcrumb(breadcrumb_items))
 
         logger.info(f"Found item: {item} score: {score}...")
         snippet = (item.body or "")[:400] + ("…" if item.body and len(item.body) > 400 else "")
@@ -110,8 +121,9 @@ async def msg_search(msg: Message):
             ]
         )
         await msg.answer(
-            f"🔎 <b>{breadcrumb}</b>\n\n{snippet}",
+            f"🔎 {breadcrumb}\n\n{snippet}",
             reply_markup=kb,
+            disable_web_page_preview=True
         )
 
     if not search_results:
