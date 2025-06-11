@@ -8,6 +8,9 @@ project_root_path = Path(__file__).parent.parent.parent
 
 class Settings(BaseSettings):
     BOT_TOKEN: str
+    POSTGRES_DB: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
     POSTGRES_URL: PostgresDsn = "postgresql://postgres:postgres@localhost:5432/tgbot_nakama"
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: str = "6333"
