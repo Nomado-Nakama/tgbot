@@ -23,5 +23,6 @@ RUN uv sync
 COPY . .
 EXPOSE ${WEBAPP_PORT}
 
+RUN uv run alembic upgrade head
 
-CMD ["sh", "-c", "uv run alembic upgrade head && uv run -m src.bot.main -u"]
+CMD ["sh", "-c", "uv run -m src.bot.main -u"]

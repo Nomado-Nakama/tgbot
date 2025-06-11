@@ -7,8 +7,7 @@ from src.bot.search_service import search_content
 
 from src.bot.content_dao import get_children, get_content, get_breadcrumb
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb, _clean_for_btn
-from src.bot.utils_html import safe_html, split_html_safe
-
+from src.bot.utils_html import safe_html, split_html_safe, remove_seo_hashtags
 
 router = Router(name="user")
 
@@ -44,6 +43,7 @@ async def cmd_help(msg: Message) -> None:
 
 @router.callback_query(F.data.startswith("open_"))
 async def cb_open(cb: CallbackQuery) -> None:
+    logger.debug(cb.data)
     item_id = int(cb.data.removeprefix("open_"))
     item = await get_content(item_id)
     if not item:
@@ -63,9 +63,16 @@ async def cb_open(cb: CallbackQuery) -> None:
     else:  # leaf
         # Split long text (TG limit 4096)
         body = safe_html(item.body or "…")
+        logger.debug("body")
+        logger.debug(body)
         chunks = split_html_safe(body, max_len=3800)
+        logger.debug("chunks")
+        logger.debug(chunks)
+        clean_user_friendly_text = remove_seo_hashtags(chunks[0])
+        logger.debug("clean_user_friendly_text")
+        logger.debug(clean_user_friendly_text)
         await cb.message.edit_text(
-            f"<b>{breadcrumb}</b>\n\n{chunks[0]}",
+            f"<b>{breadcrumb}</b>\n\n{clean_user_friendly_text}",
             reply_markup=build_children_kb([], parent_id=item.parent_id),
             disable_web_page_preview=True
         )
@@ -117,7 +124,7 @@ async def msg_search(msg: Message):
         logger.info(f"Found item: {item} score: {score}...")
         raw_body = item.body or ""
         safe_body = safe_html(raw_body)
-        snippet = split_html_safe(safe_body, 400)[0]
+        snippet = safe_html(split_html_safe(safe_body, 400)[0])
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
                 [InlineKeyboardButton(text="📖 Читать полностью", callback_data=f"open_{item.id}")]

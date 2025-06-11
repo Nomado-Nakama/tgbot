@@ -19,7 +19,8 @@ from src.bot.content_dao import (
     ContentNode,
 )
 from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
-from qdrant_client.http.models import PointStruct
+
+from qdrant_client.http.models import PointStruct, PointIdsList
 
 from src.bot.utils_hash import digest
 
@@ -223,7 +224,7 @@ class GoogleDocLoader:
             # Remove corresponding vectors from Qdrant
             await client.delete(
                 collection_name=QDRANT_COLLECTION,
-                points_selector={"points": list(to_delete)},
+                points_selector=PointIdsList(points=list(to_delete)),
             )
             logger.info(f"🗑️  Deleted {len(to_delete)} obsolete rows")
 

@@ -4,9 +4,9 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: tgbot_nakama
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "9441:5432"
     healthcheck:
@@ -26,10 +26,6 @@ services:
         condition: service_healthy
     env_file:
       - ./.env
-    environment:
-      QDRANT_HOST: qdrant
-      QDRANT_PORT: 6333
-      POSTGRES_URL: postgresql://postgres:postgres@db/tgbot_nakama
     restart: unless-stopped
     ports:
       - "${WEBAPP_PORT}:${WEBAPP_PORT}"
