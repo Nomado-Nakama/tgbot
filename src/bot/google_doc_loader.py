@@ -225,7 +225,7 @@ class GoogleDocLoader:
                 collection_name=QDRANT_COLLECTION,
                 points_selector={"points": list(to_delete)},
             )
-            logger.info("🗑️  Deleted %d obsolete rows", len(to_delete))
+            logger.info(f"🗑️  Deleted {len(to_delete)} obsolete rows")
 
         # ── 5. Re-embed & upsert only the changed/new rows into Qdrant — fast! ───
         if not self.embed_candidates:

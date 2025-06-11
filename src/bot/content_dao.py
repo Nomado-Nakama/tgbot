@@ -24,7 +24,7 @@ class Content:
     title: str
     body: str | None
     ord: int
-    text_digest: str           # new
+    text_digest: str
     embedded_at: datetime | None
 
 
@@ -62,36 +62,6 @@ async def get_children(parent: int | None) -> list[Content]:
 async def get_content(item_id: int) -> Content | None:
     row = await fetchrow(f"SELECT {_SEL} FROM content WHERE id = $1;", item_id)
     return Content(**row) if row else None
-
-
-async def insert_node(node: ContentNode, parent_id: int | None = None, order: int = 0,
-                      collected: list[tuple[int, ContentNode]] | None = None, ) -> int:
-    result = await fetchrow(
-        """
-        INSERT INTO content (parent_id, title, body, ord)
-        VALUES ($1, $2, $3, $4)
-        RETURNING id
-        """,
-        parent_id,
-        node.title,
-        node.body,
-        order,
-    )
-    current_id = result[0]
-
-    if collected is not None:
-        collected.append((current_id, node))
-
-    for idx, child in enumerate(node.children):
-        # propagate the same accumulator so every descendant is recorded
-        await insert_node(
-            child,
-            parent_id=current_id,
-            order=idx,
-            collected=collected,  # ← the missing bit
-        )
-
-    return current_id
 
 
 async def remove_all_content() -> int:

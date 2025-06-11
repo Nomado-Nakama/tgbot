@@ -109,6 +109,7 @@ async def cb_back(cb: CallbackQuery) -> None:
 async def msg_search(msg: Message):
     logger.info(f"Got msg: {msg.text} from {msg.from_user.username}...")
     search_results = search_content(msg.text, top_k=1)
+    no_results = True
     async for item, score in search_results:
         breadcrumb_items = await get_breadcrumb(item.id)
         breadcrumb = _clean_for_btn(format_breadcrumb(breadcrumb_items))
@@ -128,5 +129,7 @@ async def msg_search(msg: Message):
             disable_web_page_preview=True
         )
 
-    if not search_results:
+        no_results = False
+
+    if no_results:
         await msg.answer("Ничего не найдено 😕")

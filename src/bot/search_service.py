@@ -5,7 +5,7 @@ from src.bot.embeddings import generate_embedding
 from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
 
 
-async def search_content(query: str, top_k: int = 1):
+async def search_content(query: str, top_k: int = 2):
     logger.info(f"Creating embedding for query: {query}")
     vector = await generate_embedding(query)
     logger.info(f"Got vector with {len(vector)} dimensions for query: {query}")
@@ -13,7 +13,7 @@ async def search_content(query: str, top_k: int = 1):
         collection_name=QDRANT_COLLECTION,
         query_vector=vector,
         limit=top_k,
-        search_params={"hnsw_ef": 128},
+        search_params={"hnsw_ef": 256},
     )
 
     for hit in hits:
