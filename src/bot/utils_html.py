@@ -93,7 +93,7 @@ def remove_seo_hashtags(txt: str) -> str:
     if original != txt:
         logger.debug(f"SEO hashtags removed: {original} → {txt}")
 
-    return escape(re.sub(r"<[^>]+>", "", txt)).replace("  ", " ")
+    return txt
 
 
 def split_html_safe(text: str, max_len: int = 4000) -> List[str]:
