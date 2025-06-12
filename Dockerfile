@@ -23,6 +23,6 @@ RUN uv sync
 COPY . .
 EXPOSE ${WEBAPP_PORT}
 
-RUN uv run alembic upgrade head
+ENTRYPOINT ["/entrypoint.sh"]
 
-CMD ["sh", "-c", "uv run -m src.bot.main -u"]
+CMD ["uv", "run", "-m", "src.bot.main"]
