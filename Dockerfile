@@ -22,9 +22,6 @@ RUN uv sync
 COPY . .
 EXPOSE ${WEBAPP_PORT}
 
-ENV POSTGRES_HOST=${POSTGRES_HOST}
-ENV POSTGRES_PORT=${POSTGRES_PORT}
-ENV POSTGRES_USER=${POSTGRES_USER}
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
