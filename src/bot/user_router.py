@@ -1,9 +1,11 @@
+import re
 from loguru import logger
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from src.bot.search_service import search_content
+from src.bot.utils_html import is_balanced, escape
 
 from src.bot.content_dao import get_children, get_content, get_breadcrumb
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb, _clean_for_btn
@@ -62,17 +64,20 @@ async def cb_open(cb: CallbackQuery) -> None:
         )
     else:  # leaf
         # Split long text (TG limit 4096)
-        body = safe_html(item.body or "…")
-        logger.debug("body")
-        logger.debug(body)
-        chunks = split_html_safe(body, max_len=3800)
-        logger.debug("chunks")
-        logger.debug(chunks)
-        clean_user_friendly_text = remove_seo_hashtags(chunks[0])
-        logger.debug("clean_user_friendly_text")
-        logger.debug(clean_user_friendly_text)
+        raw_body = item.body or "…"
+        body_safe = safe_html(raw_body)
+        chunks = split_html_safe(body_safe, max_len=3800)
+        first_chunk = remove_seo_hashtags(chunks[0])
+        # final defence – is it still balanced?
+        if not is_balanced(first_chunk):
+            logger.warning(
+              f"Content {item.id} produced unbalanced HTML after hashtag removal "
+              f"(len={len(first_chunk)})… sending plain-text fallback"
+            )
+            first_chunk = escape(re.sub(r"<[^>]+>", "", first_chunk))
+
         await cb.message.edit_text(
-            f"<b>{breadcrumb}</b>\n\n{clean_user_friendly_text}",
+            f"<b>{breadcrumb}</b>\n\n{first_chunk}",
             reply_markup=build_children_kb([], parent_id=item.parent_id),
             disable_web_page_preview=True
         )

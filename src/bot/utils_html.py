@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from loguru import logger
+
 import re
 from html import escape
 from typing import List
@@ -48,8 +50,10 @@ def safe_html(raw: str) -> str:
     if is_balanced(cleaned):
         return cleaned
 
+    logger.warning("safe_html: unbalanced HTML after bleach - falling back")
+    stripped = re.sub(r"<[^>]+>", "", cleaned)
     # Fallback: escape everything → plain text
-    return escape(cleaned)
+    return escape(stripped)
 
 
 def remove_seo_hashtags(txt_with_hashtags: str) -> str:

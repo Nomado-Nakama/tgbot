@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
+from aiogram.exceptions import TelegramBadRequest
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
 from src.bot.config import settings, project_root_path
@@ -18,6 +19,18 @@ from src.bot.user_router import router as user_router
 dp = Dispatcher()
 dp.include_router(user_router)
 gdl = GoogleDocLoader()
+
+
+@dp.errors()
+async def on_error(event, exception):
+    if isinstance(exception, TelegramBadRequest):
+        logger.error(
+            "TelegramBadRequest: %s\nPayload that caused it:\n%s",
+            exception,
+            getattr(event, 'text', '')[:1000] or repr(event)  # cap length
+        )
+        # optional: notify admin chat instead of spamming users
+        return True  # marks the error as handled
 
 
 @dp.message(Command("ping"))
