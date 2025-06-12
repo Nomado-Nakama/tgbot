@@ -18,11 +18,15 @@ RUN sh /uv-installer.sh && rm /uv-installer.sh
 # Ensure the installed binary is on the `PATH`
 ENV PATH="/root/.local/bin/:$PATH"
 
-
 RUN uv sync
 COPY . .
 EXPOSE ${WEBAPP_PORT}
 
+ENV POSTGRES_HOST=${POSTGRES_HOST}
+ENV POSTGRES_PORT=${POSTGRES_PORT}
+ENV POSTGRES_USER=${POSTGRES_USER}
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
 
 CMD ["uv", "run", "-m", "src.bot.main"]
