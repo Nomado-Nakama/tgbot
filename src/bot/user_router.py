@@ -76,6 +76,8 @@ async def cb_open(cb: CallbackQuery) -> None:
             )
             first_chunk = escape(re.sub(r"<[^>]+>", "", first_chunk))
 
+        first_chunk = remove_seo_hashtags(first_chunk)
+        first_chunk = first_chunk.strip(__chars=[" ", "\n"])
         await cb.message.edit_text(
             f"<b>{breadcrumb}</b>\n\n{first_chunk}",
             reply_markup=build_children_kb([], parent_id=item.parent_id),
