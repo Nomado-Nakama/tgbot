@@ -194,6 +194,17 @@ class GoogleDocLoader:
 
         prev_rev_row = await fetchrow("SELECT value FROM kv WHERE key = 'doc_revision';")
         prev_rev = prev_rev_row["value"] if prev_rev_row else ""
+
+        points_exist = await client.scroll(
+            collection_name=QDRANT_COLLECTION,
+            scroll_filter=None,
+            with_payload=False,
+            limit=1
+        )
+        if not points_exist[0]:  # collection is empty
+            logger.warning("🆕 Empty Qdrant collection detected – forcing full re-index")
+            prev_rev = ""  # pretend revision changed
+
         if new_rev == prev_rev:
             logger.info("🟢 Google Doc revision unchanged – skipping synchronisation.")
             return
