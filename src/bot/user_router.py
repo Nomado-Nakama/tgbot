@@ -66,8 +66,8 @@ async def cb_open(cb: CallbackQuery) -> None:
         # Split long text (TG limit 4096)
         raw_body = item.body or "…"
         body_safe = safe_html(raw_body)
-        chunks = split_html_safe(body_safe, max_len=3800)
-        first_chunk = remove_seo_hashtags(chunks[0])
+        chunks = [remove_seo_hashtags(c).strip() for c in split_html_safe(body_safe, max_len=3800)]
+        first_chunk = chunks[0]
         # final defence – is it still balanced?
         if not is_balanced(first_chunk):
             logger.warning(
