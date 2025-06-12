@@ -4,11 +4,27 @@ from loguru import logger
 
 import re
 from html import escape
-from typing import List
+from typing import List, Final
 from html.parser import HTMLParser
 
 TG_TAGS = {"b", "i", "u", "s", "code", "pre", "a", "br"}
-_HASHTAG_RE = re.compile(r'(?:^|\s)#[^\s]+', flags=re.UNICODE)
+_INLINE_TAGS = TG_TAGS - {"a", "br"}  # <a> needs href; <br> is empty
+
+_HASHTAG_RE: Final[re.Pattern[str]] = re.compile(
+    r"""
+    (?<![=&\w])        # not part of an id= or href= or wordchar
+    \#                 # the hash itself
+    (?:<[^>]*>)*       # optional opening tags
+    [^\s#<]+           # hashtag body
+    (?:<[^>]*>)*       # optional closing tags
+    """,
+    flags=re.UNICODE | re.VERBOSE,
+)
+
+_EMPTY_INLINE_TAG_RE: Final[re.Pattern[str]] = re.compile(
+    r"(?i)<({tags})>\s*</\1>".format(tags="|".join(_INLINE_TAGS))
+)
+
 
 class TagChecker(HTMLParser):
     def __init__(self) -> None:
@@ -56,36 +72,28 @@ def safe_html(raw: str) -> str:
     return escape(stripped)
 
 
-def remove_seo_hashtags(txt_with_hashtags: str) -> str:
+def remove_seo_hashtags(txt: str) -> str:
     """
-    Strip every #hashtag token from text—even if the token is polluted with
-    inline HTML tags like ``#<b>visa</b>``.
-
-    Examples
-    --------
-    >>> remove_seo_hashtags("Hi #hello #world")
-    'Hi'
-    >>> remove_seo_hashtags("#привет мир")
-    'мир'
-    >>> remove_seo_hashtags("Emoji test #добро😊 #happy")
-    'Emoji test'
-    >>> remove_seo_hashtags("#<b>test</b> hello")
-    'hello'
+    Remove every `#hashtag` token – even if split by inline tags.
     """
-    if "#" not in txt_with_hashtags:
-        return txt_with_hashtags
+    if "#" not in txt:
+        return txt
 
-    original = txt_with_hashtags
-    # 1️⃣  Drop each hashtag (and any inline HTML it contains)
-    cleaned = _HASHTAG_RE.sub(" ", txt_with_hashtags)
-    # 2️⃣  Collapse double-spaces produced by the removal
-    cleaned = re.sub(r"\s{2,}", " ", cleaned).strip()
+    original = txt
 
-    # Optional debug audit
-    if original != cleaned:
-        logger.debug("SEO hashtags removed: %r → %r", original, cleaned)
+    # 1. kill hashtags
+    txt = _HASHTAG_RE.sub(" ", txt)
 
-    return cleaned
+    # 2. remove empty wrappers that are now useless
+    txt = _EMPTY_INLINE_TAG_RE.sub(" ", txt)
+
+    # 3. squeeze whitespace
+    txt = " ".join(txt.split())
+
+    if original != txt:
+        logger.debug(f"SEO hashtags removed: {original} → {txt}")
+
+    return escape(re.sub(r"<[^>]+>", "", txt)).replace("  ", " ")
 
 
 def split_html_safe(text: str, max_len: int = 4000) -> List[str]:
@@ -117,13 +125,11 @@ def split_html_safe(text: str, max_len: int = 4000) -> List[str]:
 
 
 if __name__ == "__main__":
-    print(remove_seo_hashtags("""
-Для граждан РФ виза не требуется, если вы едете в Корею как турист — до 60 дней. Но обязательно нужно оформить K-ETA — это электронное разрешение на въезд:
-🔹 Оформляется онлайн за 72 часа до вылета
-🔹 Стоимость: ~10 000 ₩ (~700₽)
-🔹 Действует: 2 года
-⚠️ Без K-ETA вас не посадят на рейс
-
-
-
-#виза"""))
+    cases = [
+        "#hello world",
+        "#<b>visa</b> required",
+        "<i>#документы </i> Всё ок",
+        "mix #tag1 <b>#tag2</b> text",
+    ]
+    for c in cases:
+        print(repr(remove_seo_hashtags(c)))
