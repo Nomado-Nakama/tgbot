@@ -303,3 +303,36 @@ Here is the changelog entry for version `0.1.0`, based on your provided diff:
    ```bash
    alembic upgrade head
    ```
+
+
+## [0.3.1] – 2025-07-15
+
+### Added
+- 🧠 **LLM helper tasks in `tools/dcl.ps1`** – generator now embeds the latest
+  commit message and current `CHANGELOG.md` into `<llm_task>` nodes
+  (`type="commit_message"` / `"changelog_update"`) to speed AI-assisted release
+  notes.
+- 🧵 **Multi-line commit capture** – collects full body via `git log -1 --pretty=%B`.
+- 📄 **CHANGELOG capture** – reads `docs/CHANGELOG.md` when present (falls back to
+  empty string).
+
+### Changed
+- ✏️ Normalized UTF-8 locale export (`$env:LC_ALL = 'C.UTF-8'`) and cleaned
+  comments.
+- 🧹 Removed stray diagnostic suffix from root XML element assignment comment.
+- 🧾 Dropped trailing `Export-ModuleMember`; function remains usable when
+  dot-sourced and reduces noise.
+- 📝 **Docs:** major rewrite of `docs/project_overview.md` → concise
+  *tgbot-nakama – Project Overview (v0.2.x)* summarizing current architecture
+  (Google Docs ingestion replaces inline admin CMS), key features table,
+  milestone history, upcoming work list, and quick-start instructions.
+
+### Removed
+- ❌ Legacy inline/admin CMS implementation plan (workflow now Google Docs
+  source-of-truth).
+- ❌ Misc stray placeholder/comments in PowerShell helper.
+
+### Notes
+- No application runtime or DB schema changes in this release; documentation +
+  tooling only.
+- Tagged from `v0.3.0` → patch bump per SemVer; pre-1.0 API remains unstable.
