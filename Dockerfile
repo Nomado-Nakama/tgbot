@@ -1,29 +1,35 @@
-FROM python:3.12-slim-bookworm
+# syntax=docker/dockerfile:1.7                 # unlock BuildKit features
+FROM python:3.12-slim-bookworm AS base
 
-ENV PYTHONUNBUFFERED=1
-ENV TZ Europe/Moscow
+ENV PYTHONUNBUFFERED=1 \
+    TZ=Europe/Moscow \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /bot
-COPY pyproject.toml pyproject.toml
 
-# The installer requires curl (and certificates) to download the release archive
-RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+# --- 1. OS packages ----------------------------------------------------------
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update -q \
+ && apt-get install -y --no-install-recommends \
+        curl ca-certificates git \
+ && rm -rf /var/lib/apt/lists/*    # cleans layer size
 
-# Download the latest installer
-ADD https://astral.sh/uv/install.sh /uv-installer.sh
+# --- 2. uv installation (single curl, cached) -------------------------------
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
 
-# Run the installer then remove it
-RUN sh /uv-installer.sh && rm /uv-installer.sh
+# --- 3. Python deps layer – COPY only lock + metadata  -----------------------
+COPY pyproject.toml uv.lock* ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-dev
 
-# Ensure the installed binary is on the `PATH`
-ENV PATH="/root/.local/bin/:$PATH"
+# --- 4. Copy source (with BuildKit hard-link optimisation) -------------------
+COPY --link . .
 
-RUN uv sync
-COPY . .
-EXPOSE ${WEBAPP_PORT}
-
+# --- 5. Final tweaks ---------------------------------------------------------
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-ENTRYPOINT ["/entrypoint.sh"]
+EXPOSE ${WEBAPP_PORT}
 
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["uv", "run", "-m", "src.bot.main"]

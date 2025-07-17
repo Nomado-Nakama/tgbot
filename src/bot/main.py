@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
+from aiogram.types.error_event import ErrorEvent
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
@@ -22,15 +23,23 @@ gdl = GoogleDocLoader()
 
 
 @dp.errors()
-async def on_error(event, exception):
-    if isinstance(exception, TelegramBadRequest):
+async def on_error(event: ErrorEvent) -> bool:
+    """
+    Global error handler.
+    In aiogram-3 an error handler receives a single ErrorEvent object.
+    Returning True marks the exception as handled so it will not be
+    re-raised by aiogram.
+    """
+    exc = event.exception
+    if isinstance(exc, TelegramBadRequest):
         logger.error(
-            "TelegramBadRequest: %s\nPayload that caused it:\n%s",
-            exception,
-            getattr(event, 'text', '')[:1000] or repr(event)  # cap length
+            "TelegramBadRequest: %s\nOffending update (truncated):\n%s",
+            exc,
+            str(event.update)[:500],
         )
-        # optional: notify admin chat instead of spamming users
-        return True  # marks the error as handled
+        return True   # exception handled – do not propagate further
+    # Let everything else bubble through the default chain
+    return False
 
 
 @dp.message(Command("ping"))
