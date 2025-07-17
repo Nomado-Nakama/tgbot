@@ -304,7 +304,6 @@ Here is the changelog entry for version `0.1.0`, based on your provided diff:
    alembic upgrade head
    ```
 
-
 ## [0.3.1] – 2025-07-15
 
 ### Added
@@ -336,3 +335,37 @@ Here is the changelog entry for version `0.1.0`, based on your provided diff:
 - No application runtime or DB schema changes in this release; documentation +
   tooling only.
 - Tagged from `v0.3.0` → patch bump per SemVer; pre-1.0 API remains unstable.
+
+## [0.3.2] – 2025-07-17
+
+### Added
+- **Docker migrator** stage: runs `alembic upgrade head` once and exits.
+- BuildKit hard-link optimisation (`COPY --link`) and cache mounts for
+  both `apt` and `uv` dramatically cut rebuild times.
+
+### Changed
+- **Dockerfile**
+  - Switched to BuildKit syntax (`# syntax=docker/dockerfile:1.7`).
+  - Single-curl installation of **uv**; dependency layer built from
+    `pyproject.toml` + `uv.lock` with `--no-dev`.
+  - PyTorch now pulled from the official CPU-only index.
+
+- **docker-compose.yaml**
+  - Network renamed to `bot-net`; qdrant kept internal (no host port).
+  - Added `migrator` service; `bot` waits for successful migration via
+    `depends_on.condition: service_completed_successfully`.
+  - Healthcheck for Postgres now uses `${POSTGRES_USER}`.
+
+- **Bot runtime**
+  - Global error handler updated to new `ErrorEvent` API; richer logging.
+  - Search snippet generation hardened against empty / malformed HTML.
+
+### Removed
+- Host-level qdrant port mapping (`6333:6333`).
+- Compose-level CPU / memory limits that interfered with CI.
+
+### Breaking
+- External references to the old network name **`bot-network`** must be
+  updated to **`bot-net`**.
+- If you relied on qdrant being exposed on localhost:6333 you must
+  publish that port manually.
