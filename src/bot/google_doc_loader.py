@@ -201,9 +201,11 @@ class GoogleDocLoader:
             with_payload=False,
             limit=1
         )
+        logger.info(f"points_exist: {points_exist}")
+
         if not points_exist[0]:  # collection is empty
             logger.warning("🆕 Empty Qdrant collection detected – forcing full re-index")
-            prev_rev = ""  # pretend revision changed
+            prev_rev = "totally_nonexistent_revision"  # pretend revision changed
 
         if new_rev == prev_rev:
             logger.info("🟢 Google Doc revision unchanged – skipping synchronisation.")
@@ -239,6 +241,7 @@ class GoogleDocLoader:
             )
             logger.info(f"🗑️  Deleted {len(to_delete)} obsolete rows")
 
+        logger.info(f"self.embed_candidates: {len(self.embed_candidates)}")
         # ── 5. Re-embed & upsert only the changed/new rows into Qdrant — fast! ───
         if not self.embed_candidates:
             logger.success("🟢 No content changes that require new embeddings.")

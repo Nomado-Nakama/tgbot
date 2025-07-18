@@ -369,3 +369,26 @@ Here is the changelog entry for version `0.1.0`, based on your provided diff:
   updated to **`bot-net`**.
 - If you relied on qdrant being exposed on localhost:6333 you must
   publish that port manually.
+
+## [0.3.3] – 2025-07-18
+
+### Fixed
+- **First-run migrations**  
+  Fresh deployments no longer crash with *“relation content does not exist”* –  
+  the initial Alembic revision now creates the `content` table and index in one
+  pure-SQL block, instead of attempting to alter a non-existent table.
+
+### Changed
+- **Docker Compose**
+  - Postgres is mapped to host&nbsp;`9441:5432`; Qdrant is mapped to
+    `6333:6333` for local inspection.
+  - Minor comment/formatting tweaks in the `migrator` service stanza.
+
+- **Google Doc loader**
+  - Added debug logs that print whether the Qdrant collection is empty and how
+    many vectors will be (re)embedded – helps trace cold-start ingestion.
+
+### Notes
+Deployments created **from scratch** (`docker compose up -d --build`) now run
+cleanly: the *migrator* container exits 0, Qdrant and the bot start without
+manual intervention.
