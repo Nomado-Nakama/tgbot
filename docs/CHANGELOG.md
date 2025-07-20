@@ -404,3 +404,11 @@ manual intervention.
 - Added verbose debug statements in `user_router.py` (`cb_open`) and
   `google_doc_loader.py` (collection count) to simplify production trouble-
   shooting — follows best-practice advice for human-oriented changelogs
+
+## [0.3.5] – 2025-07-20
+
+### Fixed
+- **Google-Docs parser** now recognises indented heading markers (`H1:`‒`H4:`) and keeps blank lines as deliberate breaks, so long articles retain structure in Telegram.  
+- **Paragraph extraction** preserves trailing whitespace, preventing accidental loss of inline formatting coming from Google Docs.  
+- **Inline-keyboard labels** are cleaned with a stricter regex that removes HTML tags without stripping entities, eliminating broken button text.  
+- **Search snippets** no longer double-strip SEO hashtags and stay within Telegram’s limits while keeping HTML balanced, stopping layout glitches in answers.
