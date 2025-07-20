@@ -109,6 +109,7 @@ function Get-LLMChanges {
 		$t1.AppendChild($xml.CreateCDataSection(
 @"
 Based on the introduced changes, craft the next conventional‑style commit message.
+Write new semantic version at the start of the commit message based of latest commit message + new changelog entry.
 The latest commit on this branch is: $latestCommit
 "@
 		)
