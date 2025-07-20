@@ -392,3 +392,15 @@ Here is the changelog entry for version `0.1.0`, based on your provided diff:
 Deployments created **from scratch** (`docker compose up -d --build`) now run
 cleanly: the *migrator* container exits 0, Qdrant and the bot start without
 manual intervention.
+
+## [0.3.4] – 2025-07-20
+
+### Fixed
+- **Message formatting**  
+  `remove_seo_hashtags()` no longer strips hard line breaks, so bullet lists
+  copied from Google Docs render correctly in Telegram (HTML parse_mode)
+
+### Changed
+- Added verbose debug statements in `user_router.py` (`cb_open`) and
+  `google_doc_loader.py` (collection count) to simplify production trouble-
+  shooting — follows best-practice advice for human-oriented changelogs
