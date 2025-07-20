@@ -427,3 +427,24 @@ manual intervention.
 
 ### Notes
 These fixes close the regression introduced in *v0.3.5* that left Qdrant empty after container rebuilds.
+
+## [0.3.7] – 2025-07-20
+
+### Performance
+- **Qdrant collection preservation**  
+  `ensure_collection()` now checks an existing collection’s
+  `size` & `distance` and keeps it when they match the embedding model.
+  Startup re-embeds **only modified nodes**, not the whole corpus, cutting
+  cold-start time and CPU usage. :contentReference[oaicite:0]{index=0}
+
+### Tooling
+- **LLM helper update**  
+  `tools/dcl.ps1` tweaks the “commit_message” task so generated messages
+  start with the new semantic version, streamlining release automation.
+
+### Internal
+- Added compatibility shim for both old (`VectorParams`) and new
+  (`dict[str, VectorParams]`) collection layouts returned by
+  `get_collection()`. :contentReference[oaicite:1]{index=1}
+
+No database schema or API changes.
