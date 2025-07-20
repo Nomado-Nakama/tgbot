@@ -14,7 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.append(str(PROJECT_ROOT))
 
 # 2. Now we can import the app settings
-from src.bot.config import settings  # noqa: E402
+from src.config import settings  # noqa: E402
 
 # -------------------------------------------------
 # 3. Build a *sync* URL for Alembic

@@ -3,7 +3,7 @@ import asyncio
 import pytest
 from testcontainers.postgres import PostgresContainer
 
-from src.bot.db import init_pool
+from src.tools.db import init_pool
 
 
 @pytest.fixture(scope="session", autouse=True)

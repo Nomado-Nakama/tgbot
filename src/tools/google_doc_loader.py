@@ -9,20 +9,20 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from loguru import logger
 
-from src.bot.config import settings
-from src.bot.db import fetchrow, execute as pg_execute, fetch
+from src.config import settings
+from src.tools.db import fetchrow, execute as pg_execute, fetch
 
-from src.bot.embeddings import generate_embeddings
+from src.tools.embeddings import generate_embeddings
 
 from src.bot.content_dao import (
     parse_google_doc_text_as_list_of_content_nodes,
     ContentNode,
 )
-from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
+from src.tools.qdrant_high_level_client import client, QDRANT_COLLECTION
 
 from qdrant_client.http.models import PointStruct, PointIdsList
 
-from src.bot.utils_hash import digest
+from src.tools.utils.utils_hash import digest
 
 _HTML_SAFE_RUN_KEYS = ("bold", "italic", "underline", "strikethrough")
 

@@ -32,4 +32,4 @@ RUN chmod +x /entrypoint.sh
 EXPOSE ${WEBAPP_PORT}
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uv", "run", "-m", "src.bot.main"]
+CMD ["uv", "run", "-m", "src.main"]

@@ -10,11 +10,11 @@ from aiogram.types.error_event import ErrorEvent
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 
-from src.bot.config import settings, project_root_path
-from src.bot.db import fetchrow, init_pool
-from src.bot.google_doc_loader import GoogleDocLoader
-from src.bot.logger import logger
-from src.bot.qdrant_high_level_client import ensure_collection
+from src.config import settings, project_root_path
+from src.tools.db import fetchrow, init_pool
+from src.tools.google_doc_loader import GoogleDocLoader
+from src.tools.logger import logger
+from src.tools.qdrant_high_level_client import ensure_collection
 from src.bot.user_router import router as user_router
 
 dp = Dispatcher()

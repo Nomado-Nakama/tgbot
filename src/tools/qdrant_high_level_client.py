@@ -7,7 +7,7 @@ from loguru import logger
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Distance, VectorParams, CollectionInfo
 
-from src.bot.config import settings
+from src.config import settings
 
 QDRANT_COLLECTION = "content_vectors"
 _VECTOR_SIZE = 384

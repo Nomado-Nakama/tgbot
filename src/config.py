@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic import PostgresDsn
 from pydantic_settings import BaseSettings
 
-project_root_path = Path(__file__).parent.parent.parent
+project_root_path = Path(__file__).parent.parent
 
 
 class Settings(BaseSettings):

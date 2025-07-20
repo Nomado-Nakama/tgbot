@@ -4,7 +4,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from src.bot.config import project_root_path
+from src.config import project_root_path
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_PATH = project_root_path / Path(os.getenv("LOG_PATH", "logs"))

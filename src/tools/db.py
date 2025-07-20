@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import asyncpg
 from loguru import logger
 
-from src.bot.config import settings
+from src.config import settings
 
 _pool: asyncpg.Pool | None = None
 

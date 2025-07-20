@@ -1,7 +1,7 @@
 import pytest
 
 from src.bot.content_dao import get_children
-from src.bot.db import execute, fetch
+from src.tools.db import execute, fetch
 
 
 @pytest.mark.asyncio

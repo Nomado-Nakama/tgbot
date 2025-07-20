@@ -1,8 +1,8 @@
 from loguru import logger
 
 from src.bot.content_dao import get_content
-from src.bot.embeddings import generate_embedding
-from src.bot.qdrant_high_level_client import client, QDRANT_COLLECTION
+from src.tools.embeddings import generate_embedding
+from src.tools.qdrant_high_level_client import client, QDRANT_COLLECTION
 
 
 async def search_content(query: str, top_k: int = 2):

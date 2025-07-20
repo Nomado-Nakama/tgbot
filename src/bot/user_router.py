@@ -1,5 +1,4 @@
 import re
-from html import escape
 
 from loguru import logger
 from aiogram import F, Router
@@ -7,11 +6,11 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from src.bot.search_service import search_content
-from src.bot.utils_html import is_balanced, escape
+from src.tools.utils.utils_html import is_balanced, escape
 
 from src.bot.content_dao import get_children, get_content, get_breadcrumb
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb, _clean_for_btn
-from src.bot.utils_html import safe_html, split_html_safe, remove_seo_hashtags
+from src.tools.utils.utils_html import safe_html, split_html_safe, remove_seo_hashtags
 
 router = Router(name="user")
 

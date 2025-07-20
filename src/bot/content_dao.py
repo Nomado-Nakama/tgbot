@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime
 
-from src.bot.db import execute, fetch, fetchrow
+from src.tools.db import execute, fetch, fetchrow
 
 
 class ContentNode:
