@@ -16,13 +16,12 @@ from src.bot.utils_html import safe_html, split_html_safe, remove_seo_hashtags
 router = Router(name="user")
 
 
-WELCOME = (
-    "👋 Привет!\n"
-    "Используй кнопки ниже, чтобы найти нужную информацию.\n"
-    "Команда /menu покажет выбор стран."
-    "Напиши интересующий тебя вопрос текстом, "
-    "а мы попробуем найти наиболее подходящий ответ."
-)
+WELCOME = """Привет!
+Это <b>Nakama</b>, твой помощник в путешествиях 🌍✈️
+
+Планируешь поездку, но не знаешь, с чего начать? Нужна ли виза в Японию, какая валюта в Грузии, когда лучше лететь в Турцию — ответы на эти и многие другие вопросы ты найдёшь в нашем боте.
+
+Тебе остаётся лишь выбрать направление, а всё остальное мы берём на себя. <b>Готов начать?</b> -> /menu"""
 
 
 def format_breadcrumb(items) -> str:
@@ -155,10 +154,10 @@ async def msg_search(msg: Message) -> None:
         chunks = [remove_seo_hashtags(c).strip() for c in split_html_safe(safe_body, max_len=3800)]
 
         if chunks:
-            snippet_html = chunks[0]
+            snippet_html = f"\n\n{chunks[0]}"
         else:
-            logger.warning("Empty/unsafe body for content id=%s", item.id)
-            snippet_html = escape(item.title)
+            logger.warning(f"Empty body for content id={item.id}")
+            snippet_html = ""
 
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
@@ -167,7 +166,7 @@ async def msg_search(msg: Message) -> None:
         )
 
         await msg.answer(
-            f"🔎 <b>{breadcrumb}</b>\n\n{snippet_html}",
+            f"🔎 <b>{breadcrumb}</b>{snippet_html}",
             reply_markup=kb,
             disable_web_page_preview=True,
         )

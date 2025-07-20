@@ -32,6 +32,7 @@ class GoogleDocLoader:
     def __init__(self):
         self.embed_candidates: List[Tuple[int, str, str, bool]] = []
         self.seen_ids: set[int] = set()
+        self.force_reembed_all: bool = False
 
     @staticmethod
     def _run_to_html(run: dict) -> str:
@@ -98,8 +99,20 @@ class GoogleDocLoader:
                 prefix, heading_counter["H4"] = "H4:", heading_counter["H4"] + 1
 
             line = self._elements_to_html(para.get("elements", [])).rstrip()
+
+            # Headings occasionally contain inline markup such as <b>…</b> that
+            # leaks into `content.title` and may become *unbalanced*
+            # (Google Docs sometimes emits an orphan “<b>” run at the very end
+            # of a heading paragraph).  Titles should stay plain-text —
+            # formatting can be re-applied later in Telegram if really needed.
             if line:
-                result_lines.append(f"{prefix}{line}" if prefix else line)
+                if prefix:  # we are inside H1–H4
+                    import re, html
+                    clean = re.sub(r"<[^>]+>", "", line)
+                    clean = html.unescape(clean).strip()
+                    result_lines.append(f"{prefix}{clean}")
+                else:
+                    result_lines.append(line)
 
         logger.debug(
             "Google Doc fetched in {:.2f}s — {} lines (H1 {}, H2 {}, H3 {}, H4 {})",
@@ -131,6 +144,8 @@ class GoogleDocLoader:
             ord_,
         )
 
+        need_embedding = self.force_reembed_all
+
         if row is None:
             # --- insert new row ------------------------------------------------
             inserted = await fetchrow(
@@ -148,7 +163,7 @@ class GoogleDocLoader:
                 datetime.now(tz=timezone.utc),
             )
             cid = inserted["id"]
-            self.embed_candidates.append((cid, txt, node.title, bool(node.body)))
+            need_embedding = True
 
         else:
             cid = row["id"]
@@ -170,7 +185,7 @@ class GoogleDocLoader:
                     dg,
                     datetime.now(tz=timezone.utc),
                 )
-                self.embed_candidates.append((cid, txt, node.title, bool(node.body)))
+                need_embedding = True
 
             # Even if digest is the same the node may have moved in the tree
             if row["parent_id"] != parent_id or row["ord"] != ord_:
@@ -180,6 +195,10 @@ class GoogleDocLoader:
                     parent_id,
                     ord_,
                 )
+
+        if need_embedding:
+            # avoid duplicates while remaining O(1) for the normal path
+            self.embed_candidates.append((cid, txt, node.title, bool(node.body)))
 
         self.seen_ids.add(cid)
 
@@ -204,7 +223,9 @@ class GoogleDocLoader:
         logger.info(f"count {QDRANT_COLLECTION}: {await client.count(collection_name=QDRANT_COLLECTION)}")
         logger.info(f"points_exist: {points_exist}")
 
-        if not points_exist[0]:  # collection is empty
+        collection_empty = not points_exist[0]  # [] → empty collection
+        self.force_reembed_all = collection_empty  # ← propagate to _upsert_node
+        if collection_empty:  # force a full re-index
             logger.warning("🆕 Empty Qdrant collection detected – forcing full re-index")
             prev_rev = "totally_nonexistent_revision"  # pretend revision changed
 
@@ -243,7 +264,10 @@ class GoogleDocLoader:
             logger.info(f"🗑️  Deleted {len(to_delete)} obsolete rows")
 
         logger.info(f"self.embed_candidates: {len(self.embed_candidates)}")
-        # ── 5. Re-embed & upsert only the changed/new rows into Qdrant — fast! ───
+
+        # ── 5. Re-embed & upsert points into Qdrant ────────────────────────────
+        # The `force_reembed_all` flag guarantees that after a collection wipe
+        # `self.embed_candidates` is never empty here.
         if not self.embed_candidates:
             logger.success("🟢 No content changes that require new embeddings.")
             return
