@@ -11,18 +11,21 @@ TG_TAGS = {"b", "i", "u", "s", "code", "pre", "a", "br"}
 _INLINE_TAGS = TG_TAGS - {"a", "br"}  # <a> needs href; <br> is empty
 
 _HASHTAG_RE: Final[re.Pattern[str]] = re.compile(
-    r"""
-    (?<![=&\w])        # not part of an id= or href= or wordchar
-    \#                 # the hash itself
-    (?:<[^>]*>)*       # optional opening tags
-    [^\s#<]+           # hashtag body
-    (?:<[^>]*>)*       # optional closing tags
+    rf"""
+    (?<![=&\w])                                # not inside an attribute/word
+    (?:                                        # optional leading wrappers
+        (?:<(?:{'|'.join(_INLINE_TAGS)})[^>]*>\s*)*   # one or more inline tags
+    )?
+    \#                                         # literal “#”
+    (?:<[^>]*>\s*)*                            # tags right after the hash
+    [^\s#<]+                                   # hashtag body itself
+    (?:\s*<[^>]*>)*                            # trailing/closing tags
     """,
-    flags=re.UNICODE | re.VERBOSE,
+    flags=re.UNICODE | re.VERBOSE | re.IGNORECASE,
 )
 
 _EMPTY_INLINE_TAG_RE: Final[re.Pattern[str]] = re.compile(
-    r"(?i)<({tags})>\s*</\1>".format(tags="|".join(_INLINE_TAGS))
+    r"(?i)<({tags})[^>]*>\s*</\1>".format(tags="|".join(_INLINE_TAGS))
 )
 
 
