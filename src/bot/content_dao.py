@@ -87,14 +87,19 @@ def parse_google_doc_text_as_list_of_content_nodes(raw: str) -> list[ContentNode
         return 5  # body
 
     for line in lines:
-        line = line.strip()
-        if not line:
+        if line == "":
+            if current_leaf is not None:
+                current_leaf.body = (
+                    "" if current_leaf.body is None else f"{current_leaf.body}\n"
+                )
             continue
 
-        # H1:/H2:/H3: are inserted by load_google_doc via paragraph style mapping
-        if any(line.startswith(prefix) for prefix in ["H1:", "H2:", "H3:", "H4:"]):
-            level = detect_level(line)
-            clean_line = line.split(":", 1)[1].strip()
+        stripped_left = line.lstrip()
+
+        # H1/H2/H3/H4 markers may have no indent – use the left-stripped variant
+        if any(stripped_left.startswith(p) for p in ["H1:", "H2:", "H3:", "H4:"]):
+            level = detect_level(stripped_left)
+            clean_line = stripped_left.split(":", 1)[1].lstrip()
             node = ContentNode(level=str(level), title=clean_line)
 
             # Maintain hierarchy via stack
@@ -111,10 +116,11 @@ def parse_google_doc_text_as_list_of_content_nodes(raw: str) -> list[ContentNode
 
         else:
             if current_leaf:
+                slice_ = line.rstrip()
                 current_leaf.body = (
-
-                    line if current_leaf.body is None else f"{current_leaf.body}\n{line}"
-
+                    slice_
+                    if current_leaf.body is None
+                    else f"{current_leaf.body}\n{slice_}"
                 )
 
     return nodes

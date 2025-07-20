@@ -97,7 +97,7 @@ class GoogleDocLoader:
             elif style == "HEADING_4":
                 prefix, heading_counter["H4"] = "H4:", heading_counter["H4"] + 1
 
-            line = self._elements_to_html(para.get("elements", [])).strip()
+            line = self._elements_to_html(para.get("elements", [])).rstrip()
             if line:
                 result_lines.append(f"{prefix}{line}" if prefix else line)
 

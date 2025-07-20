@@ -150,19 +150,15 @@ async def msg_search(msg: Message) -> None:
         breadcrumb = _clean_for_btn(" › ".join(i.title for i in breadcrumb_items))
 
         raw_body = item.body or ""
-        safe_body = safe_html(raw_body)
-        chunks = split_html_safe(safe_body, max_len=400)
 
-        # ------------------------------------------------------------------
-        # Snippet logic – handle empty articles gracefully
-        # ------------------------------------------------------------------
+        safe_body = safe_html(raw_body)
+        chunks = [remove_seo_hashtags(c).strip() for c in split_html_safe(safe_body, max_len=3800)]
+
         if chunks:
-            snippet_html = safe_html(chunks[0])
+            snippet_html = chunks[0]
         else:
             logger.warning("Empty/unsafe body for content id=%s", item.id)
             snippet_html = escape(item.title)
-
-        snippet_html = remove_seo_hashtags(snippet_html).strip()
 
         kb = InlineKeyboardMarkup(
             inline_keyboard=[
