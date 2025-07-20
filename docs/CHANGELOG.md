@@ -412,3 +412,18 @@ manual intervention.
 - **Paragraph extraction** preserves trailing whitespace, preventing accidental loss of inline formatting coming from Google Docs.  
 - **Inline-keyboard labels** are cleaned with a stricter regex that removes HTML tags without stripping entities, eliminating broken button text.  
 - **Search snippets** no longer double-strip SEO hashtags and stay within Telegram’s limits while keeping HTML balanced, stopping layout glitches in answers.
+
+## [0.3.6] – 2025-07-20
+
+### Fixed
+- **Cold-start vector loss** – the bot now detects an empty **Qdrant** collection and re-embeds *all* content nodes on boot, so search works after a fresh deploy.  
+- **Unbalanced heading HTML** – Google Docs headings are saved as plain text; stray `<b>` tags can no longer leak into `content.title`, preventing broken breadcrumbs & buttons.  
+- **Inline-keyboard titles** – stricter tag-stripping (`<[^>]+>`) plus `html.unescape()` keeps button labels human-readable.  
+- **Search snippets** – blank articles no longer generate double line-breaks; welcome copy updated for clarity.
+
+### Changed
+- **GoogleDocLoader** refactored: unified “needs re-embed” logic via `force_reembed_all`, deduplicating `embed_candidates`.  
+- Internal logging improved for collection state & embedding stats.
+
+### Notes
+These fixes close the regression introduced in *v0.3.5* that left Qdrant empty after container rebuilds.
