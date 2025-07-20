@@ -66,10 +66,15 @@ async def cb_open(cb: CallbackQuery) -> None:
         )
     else:  # leaf
         # Split long text (TG limit 4096)
+        logger.info(f"item: {item}")
+
         raw_body = item.body or "…"
+
         body_safe = safe_html(raw_body)
+        logger.info(f"body_safe: {body_safe}")
         chunks = [remove_seo_hashtags(c).strip() for c in split_html_safe(body_safe, max_len=3800)]
         first_chunk = chunks[0]
+        logger.info(f"chunks: {chunks}")
         # final defence – is it still balanced?
         if not is_balanced(first_chunk):
             logger.warning(
@@ -79,8 +84,11 @@ async def cb_open(cb: CallbackQuery) -> None:
             first_chunk = escape(re.sub(r"<[^>]+>", "", first_chunk))
 
         first_chunk = remove_seo_hashtags(first_chunk)
+        logger.info(f"first_chunk: {first_chunk}")
         first_chunk = first_chunk.strip()
+        logger.info(f"first_chunk.strip: {first_chunk}")
         complete_text = remove_seo_hashtags(f"<b>{breadcrumb}</b>\n\n{first_chunk}")
+        logger.info(f"complete_text: {complete_text}")
 
         await cb.message.edit_text(
             complete_text,

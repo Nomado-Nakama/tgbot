@@ -201,6 +201,7 @@ class GoogleDocLoader:
             with_payload=False,
             limit=1
         )
+        logger.info(f"count {QDRANT_COLLECTION}: {await client.count(collection_name=QDRANT_COLLECTION)}")
         logger.info(f"points_exist: {points_exist}")
 
         if not points_exist[0]:  # collection is empty

@@ -88,10 +88,23 @@ def remove_seo_hashtags(txt: str) -> str:
     txt = _HASHTAG_RE.sub(" ", txt)
 
     # 2. remove empty wrappers that are now useless
-    txt = _EMPTY_INLINE_TAG_RE.sub(" ", txt)
+    #    • If the wrapper spans at least one explicit line-break (`\n`),
+    #      keep ONE line-break so paragraphs stay intact.
+    #    • Otherwise collapse to a single space.
+    def _preserve_nl(match: re.Match[str]) -> str:
+        return "\n" if "\n" in match.group(0) else " "
 
-    # 3. squeeze whitespace
-    txt = " ".join(txt.split())
+    txt = _EMPTY_INLINE_TAG_RE.sub(_preserve_nl, txt)
+
+    # 3. squeeze whitespace *while keeping explicit line breaks*.
+    # Telegram renders the plain “\n” as a line break, so we must not
+    # collapse them away.  Instead, compress runs of spaces/tabs inside
+    # each individual line and then re-join the lines with “\n”.
+    lines = [
+        re.sub(r"[ \t]+", " ", line).strip()
+        for line in txt.splitlines()
+    ]
+    txt = "\n".join(lines)
 
     if original != txt:
         logger.debug(f"SEO hashtags removed: {original} → {txt}")
