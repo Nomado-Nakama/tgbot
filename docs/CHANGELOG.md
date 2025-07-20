@@ -435,7 +435,7 @@ These fixes close the regression introduced in *v0.3.5* that left Qdrant empty a
   `ensure_collection()` now checks an existing collection’s
   `size` & `distance` and keeps it when they match the embedding model.
   Startup re-embeds **only modified nodes**, not the whole corpus, cutting
-  cold-start time and CPU usage. :contentReference[oaicite:0]{index=0}
+  cold-start time and CPU usage.
 
 ### Tooling
 - **LLM helper update**  
@@ -445,6 +445,43 @@ These fixes close the regression introduced in *v0.3.5* that left Qdrant empty a
 ### Internal
 - Added compatibility shim for both old (`VectorParams`) and new
   (`dict[str, VectorParams]`) collection layouts returned by
-  `get_collection()`. :contentReference[oaicite:1]{index=1}
+  `get_collection()`.
 
 No database schema or API changes.
+
+## [0.4.0] – 2025-07-20
+
+### Added
+- **`src/tools` package** – new home for shared utilities (`db.py`, `embeddings.py`,
+  `logger.py`, `qdrant_high_level_client.py`, `utils_*`, plus `__init__.py`).
+
+### Changed
+- **Project structure refactor**
+  - All helpers formerly under `src.bot.*` moved to `src.tools.*`; every import
+    across the code-base updated accordingly.
+  - Main entry point relocated to `src/main.py`; **Dockerfile** `CMD` now
+    `uv run -m src.main`, still leveraging BuildKit’s `COPY --link` optimisation
+    for fast builds.
+  - `config.py` now resolves `project_root_path` relative to the new layout.
+  - Alembic `env.py`, Google Docs loader, search service, and tests point to the
+    new module paths, following best practice for explicit imports in Alembic
+    environments.
+  - Updated Testcontainers fixture to import the relocated pool initialiser.
+  - Logger path configuration adjusted after the move and still uses Loguru
+    idioms.
+  - Docker image still installs dependencies with **uv** (validated against
+    current uv docs).
+
+### Fixed
+- Incorrect `project_root_path` that pointed one level too high after the
+  directory shuffle caused mis-resolved log paths.
+
+### Breaking
+- **Import paths** – replace `src.bot.*` with `src.tools.*` in any external code
+  or third-party integrations.
+- **Docker CMD / scripts** – update references from `src.bot.main` to `src.main`.
+
+### Notes
+No database-schema changes. Runtime behaviour is identical once paths
+are updated. The refactor aligns module layout with Python packaging
+recommendations for maintainability.
