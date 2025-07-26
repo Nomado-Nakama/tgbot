@@ -46,14 +46,11 @@ def build_children_kb(children: list[Content], *, parent_id: int | None) -> Inli
     kb.adjust(1)  # one column
 
     # nav buttons
-    nav_row: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text="🏠 Главная", callback_data=ROOT_BACK_ID)
-    ]
     if parent_id is not None:
-        nav_row.insert(
-            0,
+        nav_row: list[InlineKeyboardButton] = [
             InlineKeyboardButton(text="⬅️ Назад", callback_data=f"back_{parent_id}"),
-        )
-    kb.row(*nav_row)
+            InlineKeyboardButton(text="🏠 Главная", callback_data=ROOT_BACK_ID)
+        ]
+        kb.row(*nav_row)
 
     return kb.as_markup(resize_keyboard=True)
