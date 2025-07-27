@@ -41,16 +41,16 @@ async def cmd_help(msg: Message) -> None:
     roots = await get_children(None)
     await msg.answer(
         "Выбирай страну, о которой хочешь узнать полезную информацию:",
-        reply_markup=build_children_kb(roots, parent_id=None),
+        reply_markup=build_children_kb(roots, parent_id=None, main_menu=True),
         disable_web_page_preview=True
     )
 
 
 @router.callback_query(F.data.startswith("open_"))
 async def cb_open(cb: CallbackQuery) -> None:
-    logger.debug(cb.data)
     item_id = int(cb.data.removeprefix("open_"))
     item = await get_content(item_id)
+    logger.info(f"Got {item}, parent_id = {item.parent_id}")
     if not item:
         await cb.answer("⚠️ Запись не найдена.", show_alert=True)
         return
@@ -60,6 +60,7 @@ async def cb_open(cb: CallbackQuery) -> None:
 
     children = await get_children(item.id)
     if children:  # category
+        logger.info(f"item: {item}")
         await cb.message.edit_text(
             f"📂 <b>{breadcrumb}</b>",
             reply_markup=build_children_kb(children, parent_id=item.parent_id),
@@ -93,7 +94,7 @@ async def cb_open(cb: CallbackQuery) -> None:
 
         await cb.message.edit_text(
             complete_text,
-            reply_markup=build_children_kb([], parent_id=item.parent_id),
+            reply_markup=build_children_kb([], parent_id=item.parent_id or 'back_root'),
             disable_web_page_preview=True
         )
         # optional follow-ups
@@ -107,8 +108,8 @@ async def cb_open(cb: CallbackQuery) -> None:
 async def cb_home(cb: CallbackQuery) -> None:
     roots = await get_children(None)
     await cb.message.edit_text(
-        "🏠 <b>Главное меню</b>",
-        reply_markup=build_children_kb(roots, parent_id=None),
+        "Выбирай страну, о которой хочешь узнать полезную информацию:",
+        reply_markup=build_children_kb(roots, parent_id=None, main_menu=True),
         disable_web_page_preview=True
     )
     await cb.answer()
@@ -125,7 +126,7 @@ async def cb_back(cb: CallbackQuery) -> None:
         f"📂 <b>{breadcrumb}</b>",
         reply_markup=build_children_kb(
             siblings,
-            parent_id=parent_obj.parent_id if parent_obj else None,
+            parent_id=parent_obj.parent_id,
         ),
         disable_web_page_preview=True
     )

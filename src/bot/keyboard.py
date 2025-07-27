@@ -6,6 +6,7 @@ from __future__ import annotations
 import re
 from html import unescape
 
+import loguru
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
@@ -27,7 +28,7 @@ def _clean_for_btn(text: str) -> str:
     return _TAG_RE.sub("", unescape(text)).strip()
 
 
-def build_children_kb(children: list[Content], *, parent_id: int | None) -> InlineKeyboardMarkup:
+def build_children_kb(children: list[Content], *, parent_id: int | None, main_menu=False) -> InlineKeyboardMarkup:
     """
     Build a keyboard:
       • One button per child (ordered)
@@ -46,9 +47,10 @@ def build_children_kb(children: list[Content], *, parent_id: int | None) -> Inli
     kb.adjust(1)  # one column
 
     # nav buttons
-    if parent_id is not None:
+    if not main_menu:
+        back_button_callback_data = f"back_{parent_id}" if parent_id else ROOT_BACK_ID
         nav_row: list[InlineKeyboardButton] = [
-            InlineKeyboardButton(text="⬅️ Назад", callback_data=f"back_{parent_id}"),
+            InlineKeyboardButton(text="⬅️ Назад", callback_data=back_button_callback_data),
             InlineKeyboardButton(text="🏠 Главная", callback_data=ROOT_BACK_ID)
         ]
         kb.row(*nav_row)

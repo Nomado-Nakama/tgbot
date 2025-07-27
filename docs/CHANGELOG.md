@@ -485,3 +485,12 @@ No database schema or API changes.
 No database-schema changes. Runtime behaviour is identical once paths
 are updated. The refactor aligns module layout with Python packaging
 recommendations for maintainability.
+
+## [0.4.1] – 2025‑07‑27
+
+### Added
+- **bot‑navigation:** `build_children_kb` now accepts a `main_menu: bool` flag to suppress the “⬅️ Назад” button on the main menu.  
+- Updated `user_router.py`:
+  - `cmd_help` and `cb_home` pass `main_menu=True`.
+  - Added logging to `cb_open` and `cb_back` for better debug insight.
+  - Improved `cb_open` fallback logic to avoid `None` in callback_data.
