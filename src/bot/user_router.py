@@ -133,47 +133,47 @@ async def cb_back(cb: CallbackQuery) -> None:
     await cb.answer()
 
 
-@router.message()
-async def msg_search(msg: Message) -> None:
-    """
-    Handle free-text user queries:
-    1. Embed the query, search Qdrant, fetch the best match.
-    2. Send a short teaser + button which opens the full article.
-    Robust against empty/HTML-stripped articles (no IndexError).
-    """
-    query = msg.text or ""
-    logger.info("msg_search: query=%r from user=%s", query, msg.from_user.id)
-
-    no_results = True
-    async for item, score in search_content(query, top_k=1):
-        logger.debug("search hit: id=%s score=%s", item.id, score)
-
-        breadcrumb_items = await get_breadcrumb(item.id)
-        breadcrumb = _clean_for_btn(" › ".join(i.title for i in breadcrumb_items))
-
-        raw_body = item.body or ""
-
-        safe_body = safe_html(raw_body)
-        chunks = [remove_seo_hashtags(c).strip() for c in split_html_safe(safe_body, max_len=3800)]
-
-        if chunks:
-            snippet_html = f"\n\n{chunks[0]}"
-        else:
-            logger.warning(f"Empty body for content id={item.id}")
-            snippet_html = ""
-
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [InlineKeyboardButton(text="📖 Читать полностью", callback_data=f"open_{item.id}")]
-            ]
-        )
-
-        await msg.answer(
-            f"🔎 <b>{breadcrumb}</b>{snippet_html}",
-            reply_markup=kb,
-            disable_web_page_preview=True,
-        )
-        no_results = False
-
-    if no_results:
-        await msg.answer("Ничего не найдено 😕")
+# @router.message()
+# async def msg_search(msg: Message) -> None:
+#     """
+#     Handle free-text user queries:
+#     1. Embed the query, search Qdrant, fetch the best match.
+#     2. Send a short teaser + button which opens the full article.
+#     Robust against empty/HTML-stripped articles (no IndexError).
+#     """
+#     query = msg.text or ""
+#     logger.info("msg_search: query=%r from user=%s", query, msg.from_user.id)
+#
+#     no_results = True
+#     async for item, score in search_content(query, top_k=1):
+#         logger.debug("search hit: id=%s score=%s", item.id, score)
+#
+#         breadcrumb_items = await get_breadcrumb(item.id)
+#         breadcrumb = _clean_for_btn(" › ".join(i.title for i in breadcrumb_items))
+#
+#         raw_body = item.body or ""
+#
+#         safe_body = safe_html(raw_body)
+#         chunks = [remove_seo_hashtags(c).strip() for c in split_html_safe(safe_body, max_len=3800)]
+#
+#         if chunks:
+#             snippet_html = f"\n\n{chunks[0]}"
+#         else:
+#             logger.warning(f"Empty body for content id={item.id}")
+#             snippet_html = ""
+#
+#         kb = InlineKeyboardMarkup(
+#             inline_keyboard=[
+#                 [InlineKeyboardButton(text="📖 Читать полностью", callback_data=f"open_{item.id}")]
+#             ]
+#         )
+#
+#         await msg.answer(
+#             f"🔎 <b>{breadcrumb}</b>{snippet_html}",
+#             reply_markup=kb,
+#             disable_web_page_preview=True,
+#         )
+#         no_results = False
+#
+#     if no_results:
+#         await msg.answer("Ничего не найдено 😕")
