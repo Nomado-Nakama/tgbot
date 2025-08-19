@@ -494,3 +494,11 @@ recommendations for maintainability.
   - `cmd_help` and `cb_home` pass `main_menu=True`.
   - Added logging to `cb_open` and `cb_back` for better debug insight.
   - Improved `cb_open` fallback logic to avoid `None` in callback_data.
+
+## [0.4.2] - 2025-08-19
+
+### Added
+- **bot-navigation:** `build_children_kb` now accepts `current_id` and `previous_menu_message_id` parameters in order to display new button "💾 Сохранить информацию в чате"
+- Updated `user_router.py`:
+  - minor changes in `cb_open` - now passing `current_id` - current content id and `previous_menu_message_id` latest active menu message id to `build_children_kb`
+  - new handler `cb_save` - processes presses on new button "💾 Сохранить информацию в чате" - sends plain text to user, deletes old menu (because it is now not the latest message), sends new menu

@@ -9,6 +9,7 @@ from aiogram.types import Message, FSInputFile
 from aiogram.types.error_event import ErrorEvent
 from aiogram.exceptions import TelegramBadRequest
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from googleapiclient.errors import HttpError
 
 from src.config import settings, project_root_path
 from src.tools.db import fetchrow, init_pool
@@ -55,7 +56,10 @@ async def main():
 
     try:
         await ensure_collection()
-        await gdl.reload_content_from_google_docx_to_db()
+        try:
+            await gdl.reload_content_from_google_docx_to_db()
+        except HttpError as e:
+            logger.info(f"Google docs API returned an error: {e}")
 
         if settings.RUNNING_ENV == "LOCAL":
             logger.info("Running in LOCAL mode with long polling.")

@@ -68,6 +68,7 @@ async def cb_open(cb: CallbackQuery) -> None:
     else:  # leaf
         # Split long text (TG limit 4096)
         logger.info(f"item: {item}")
+        logger.info(f"message: {cb.message.message_id}")
 
         raw_body = item.body or "…"
 
@@ -93,7 +94,12 @@ async def cb_open(cb: CallbackQuery) -> None:
 
         await cb.message.edit_text(
             complete_text,
-            reply_markup=build_children_kb([], parent_id=item.parent_id or 'back_root'),
+            reply_markup=build_children_kb(
+                [],
+                parent_id=item.parent_id or 'back_root',
+                current_id=item.id,
+                previous_menu_message_id=cb.message.message_id
+            ),
             disable_web_page_preview=True
         )
         # optional follow-ups
@@ -131,6 +137,59 @@ async def cb_back(cb: CallbackQuery) -> None:
     )
     await cb.answer()
 
+@router.callback_query(F.data.startswith("save_"))
+async def cb_save(cb: CallbackQuery) -> None:
+    item_id = int(cb.data.removeprefix("save_").split('_')[0])
+    prev_menu_message_id = int(cb.data.removeprefix("save_").split('_')[1])
+    item = await get_content(item_id)
+    logger.info(f"Got {item}, parent_id = {item.parent_id}")
+    if not item:
+        await cb.answer("⚠️ Запись не найдена.", show_alert=True)
+        return
+
+    breadcrumb_items = await get_breadcrumb(item_id)
+    breadcrumb = _clean_for_btn(format_breadcrumb(breadcrumb_items))
+
+    logger.info(f"item: {item}")
+
+    raw_body = item.body or "…"
+
+    body_safe = safe_html(raw_body)
+    logger.info(f"body_safe: {body_safe}")
+    chunks = [remove_seo_hashtags(c).strip() for c in split_html_safe(body_safe, max_len=3800)]
+    first_chunk = chunks[0]
+    logger.info(f"chunks: {chunks}")
+    # final defence – is it still balanced?
+    if not is_balanced(first_chunk):
+        logger.warning(
+            f"Content {item.id} produced unbalanced HTML after hashtag removal "
+            f"(len={len(first_chunk)})… sending plain-text fallback"
+        )
+        first_chunk = escape(re.sub(r"<[^>]+>", "", first_chunk))
+
+    first_chunk = remove_seo_hashtags(first_chunk)
+    logger.info(f"first_chunk: {first_chunk}")
+    first_chunk = first_chunk.strip()
+    logger.info(f"first_chunk.strip: {first_chunk}")
+    complete_text = remove_seo_hashtags(f"<b>{breadcrumb}</b>\n\n{first_chunk}")
+    logger.info(f"complete_text: {complete_text}")
+
+    await cb.message.answer(
+        complete_text,
+        disable_web_page_preview=True
+    )
+
+    await cb.bot.delete_message(chat_id=cb.message.chat.id, message_id=prev_menu_message_id)
+    await cb.message.answer(
+        text=complete_text,
+        reply_markup=build_children_kb(
+            [],
+            parent_id=item.parent_id or 'back_root',
+            current_id=item.id,
+            previous_menu_message_id=cb.message.message_id
+        ),
+        disable_web_page_preview=True
+    )
 
 # @router.message()
 # async def msg_search(msg: Message) -> None:

@@ -9,6 +9,6 @@ def fake(id_: int, title: str) -> Content:
 def test_build_root_kb():
     kb = build_children_kb([fake(1, "A"), fake(2, "B")], parent_id=None)
     buttons = [b.text for row in kb.inline_keyboard for b in row]
-    assert buttons == ["A", "B", "🏠 Главная"]
+    assert buttons == ["A", "B", "⬅️ Назад", "🏠 Главная"]
     # no back button at root
     assert ROOT_BACK_ID in [b.callback_data for b in kb.inline_keyboard[-1]]
