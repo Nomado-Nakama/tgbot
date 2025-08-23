@@ -14,7 +14,6 @@ from src.tools.utils.utils_html import safe_html, split_html_safe, remove_seo_ha
 
 router = Router(name="user")
 
-
 WELCOME = """Привет!
 
 Добро пожаловать в уникального помощника для твоих путешествий! 🌍✈️
@@ -22,6 +21,7 @@ WELCOME = """Привет!
 Внутри бота ты найдёшь самую важную и полезную информацию по каждой стране: от оформления визы и особенностей транспорта до местной кухни и полезных советов, основанных на нашем личном опыте!
 
 Тебе остаётся лишь выбрать направление, а всё остальное мы берём на себя. <b>Готов начать?</b> -> /menu"""
+
 
 # А еще наш бот умеет отвечать на твои открытые вопросы – просто задай свой вопрос, и бот подберёт для тебя наиболее подходящий ответ из нашей базы знаний.
 
@@ -80,8 +80,8 @@ async def cb_open(cb: CallbackQuery) -> None:
         # final defence – is it still balanced?
         if not is_balanced(first_chunk):
             logger.warning(
-              f"Content {item.id} produced unbalanced HTML after hashtag removal "
-              f"(len={len(first_chunk)})… sending plain-text fallback"
+                f"Content {item.id} produced unbalanced HTML after hashtag removal "
+                f"(len={len(first_chunk)})… sending plain-text fallback"
             )
             first_chunk = escape(re.sub(r"<[^>]+>", "", first_chunk))
 
@@ -136,6 +136,7 @@ async def cb_back(cb: CallbackQuery) -> None:
         disable_web_page_preview=True
     )
     await cb.answer()
+
 
 @router.callback_query(F.data.startswith("save_"))
 async def cb_save(cb: CallbackQuery) -> None:

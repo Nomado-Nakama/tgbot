@@ -6,3 +6,4 @@ uv.lock
 **.log
 google-service-account.json
 docker-compose.override.yaml
+**.xml

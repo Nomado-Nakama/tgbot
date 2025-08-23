@@ -17,6 +17,10 @@ from src.tools.google_doc_loader import GoogleDocLoader
 from src.tools.logger import logger
 from src.tools.qdrant_high_level_client import ensure_collection
 from src.bot.user_router import router as user_router
+from src.bot.user_actions_log_middleware import UserActionsLogMiddleware, OutgoingLoggingMiddleware
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 dp = Dispatcher()
 dp.include_router(user_router)
@@ -53,6 +57,8 @@ async def ping(message: Message):
 
 async def main():
     bot = Bot(settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+    dp.update.outer_middleware(UserActionsLogMiddleware())
+    bot.session.middleware(OutgoingLoggingMiddleware())
 
     try:
         await ensure_collection()
