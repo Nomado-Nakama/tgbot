@@ -502,3 +502,18 @@ recommendations for maintainability.
 - Updated `user_router.py`:
   - minor changes in `cb_open` - now passing `current_id` - current content id and `previous_menu_message_id` latest active menu message id to `build_children_kb`
   - new handler `cb_save` - processes presses on new button "💾 Сохранить информацию в чате" - sends plain text to user, deletes old menu (because it is now not the latest message), sends new menu
+
+## [0.5.0] – 2025-08-23
+
+### Added
+- **Runtime logging**  
+  - Enabled `UserActionsLogMiddleware` (incoming updates) and `OutgoingLoggingMiddleware` (Bot API deliveries) in `main.py`, providing per-event activity rows and message-delivery tracking for observability and analytics.
+
+### Changed
+- **Alembic**: timestamped revision filenames via `file_template` in `alembic.ini` (clean history & easier auditing).  
+- **Dockerfile**: removed `ENTRYPOINT` wrapper; container now starts directly via `CMD`.  
+- **Repo hygiene**: ignore `*.xml` files.  
+- **Migrations template**: dropped unused `sqlalchemy` import from `migrations/script.py.mako`.  
+- **User router**: minor whitespace/formatting only.
+
+> Notes: Version bumped as a MINOR under SemVer (pre-1.0) for a new feature, and entries grouped per *Keep a Changelog* conventions. :contentReference[oaicite:1]{index=1}
