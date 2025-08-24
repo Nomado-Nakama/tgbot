@@ -557,3 +557,12 @@ recommendations for maintainability.
 - Avoided string placeholders for `parent_id`; guarded `None` in `cb_back`.
 
 > Notes: Internal refactor only — no schema or user-visible behavior changes.
+
+## [0.6.3] – 2025-08-24
+
+### Changed
+- **Content Sync:** consolidated Google Docs loader — `src/content_sync/sources/google_docs.py` is now the canonical implementation.
+- **Code hygiene:** removed an unused import from `src/content_sync/models.py`.
+
+### Deprecated
+- `src/content_sync/google_docs.py` removed.
