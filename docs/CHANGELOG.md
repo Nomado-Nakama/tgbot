@@ -540,3 +540,20 @@ recommendations for maintainability.
 - `src/tools/google_doc_loader.py`
 
 > Notes: Internal refactor only: **no database schema changes** and no user-visible behavior changes.
+
+## [0.6.2] – 2025-08-24
+
+### Added
+- **Renderer module**: `src/bot/renderers/content_renderer.py` centralizes:
+  - Breadcrumb building (`build_breadcrumb_text`)
+  - HTML sanitizing + SEO hashtag cleanup
+  - Telegram-safe chunking with balanced-HTML fallback (`render_leaf_message`)
+
+### Changed
+- **User router**: `cb_open` and `cb_save` now delegate rendering to the new module, removing ~70 lines of duplicated logic while preserving output.
+
+### Fixed
+- Removed fragile `escape` import from utils (now uses `html.escape` in renderer).
+- Avoided string placeholders for `parent_id`; guarded `None` in `cb_back`.
+
+> Notes: Internal refactor only — no schema or user-visible behavior changes.
