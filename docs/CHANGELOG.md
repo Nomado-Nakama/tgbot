@@ -566,3 +566,17 @@ recommendations for maintainability.
 
 ### Deprecated
 - `src/content_sync/google_docs.py` removed.
+
+## \[0.6.4] – 2025-08-24
+
+### Changed
+
+* **Content domain consolidation**: migrated `src/content_sync/*` into `src/content/*` and exposed public APIs via `src/content/__init__.py`.
+* **Imports rewired**: `user_router.py`, `keyboard.py`, tests, and the sync pipeline now import from `src.content.*`.
+* **Pipeline & runtime**: `main.py` imports `run_once` from `src.content.sync.pipeline.sync`; removed an unused `ensure_collection` import in the Qdrant store.
+
+### Fixed
+
+* **KV revision write**: `set_doc_revision()` now performs an UPSERT, preventing failures when the `doc_revision` key doesn’t exist on first run.
+
+> Notes: No database schema changes. No user-visible behavior changes.
