@@ -5,7 +5,7 @@ from typing import Iterable, List
 from loguru import logger
 from qdrant_client.http.models import PointStruct, PointIdsList
 
-from src.tools.qdrant_high_level_client import client, QDRANT_COLLECTION, ensure_collection
+from src.tools.qdrant_high_level_client import client, QDRANT_COLLECTION
 
 
 async def is_collection_empty() -> bool:

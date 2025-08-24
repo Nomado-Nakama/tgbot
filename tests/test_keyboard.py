@@ -1,4 +1,4 @@
-from src.bot.content_dao import Content
+from src.content.models import Content
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
 
 

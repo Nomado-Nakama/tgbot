@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import List
 
-from src.content_sync.models import ContentNode
+from src.content.models import ContentNode
 
 
 def parse_lines_to_nodes(raw: str) -> List[ContentNode]:

@@ -14,7 +14,7 @@ from googleapiclient.errors import HttpError
 from src.tools.logger import logger
 from src.tools.db import fetchrow, init_pool
 from src.config import settings, project_root_path
-from src.content_sync.pipeline.sync import run_once
+from src.content.sync.pipeline.sync import run_once
 from src.bot.user_router import router as user_router
 from src.tools.qdrant_high_level_client import ensure_collection
 from src.activity_log import UserActionsLogMiddleware, OutgoingLoggingMiddleware

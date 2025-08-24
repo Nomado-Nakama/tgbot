@@ -3,9 +3,9 @@ from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
+from src.content import build_breadcrumb_text, render_leaf_message
 from src.bot.content_dao import get_children, get_content, get_breadcrumb
 from src.bot.keyboard import ROOT_BACK_ID, build_children_kb, _clean_for_btn
-from src.bot.renderers.content_renderer import build_breadcrumb_text, render_leaf_message
 
 router = Router(name="user")
 

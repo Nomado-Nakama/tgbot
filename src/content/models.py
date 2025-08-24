@@ -1,6 +1,6 @@
 from __future__ import annotations
-
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional, List
 
 
@@ -14,6 +14,17 @@ class ContentNode:
     def __post_init__(self):
         if self.children is None:
             self.children = []
+
+
+@dataclass(slots=True)
+class Content:
+    id: int
+    parent_id: Optional[int]
+    title: str
+    body: Optional[str]
+    ord: int
+    text_digest: str
+    embedded_at: Optional[datetime]
 
 
 @dataclass(slots=True)

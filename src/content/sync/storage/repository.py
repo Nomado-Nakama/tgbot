@@ -13,7 +13,13 @@ async def get_doc_revision() -> str:
 
 
 async def set_doc_revision(new_rev: str) -> None:
-    await pg_execute("UPDATE kv SET value = $1 WHERE key = 'doc_revision';", new_rev)
+    await pg_execute(
+        """
+        INSERT INTO kv(key, value) VALUES ('doc_revision', $1)
+        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
+        """,
+        new_rev
+    )
 
 
 async def list_all_content_ids() -> list[int]:

@@ -4,7 +4,7 @@ from html import escape as html_escape
 import re
 from typing import List, Tuple
 
-from src.bot.content_dao import Content
+from src.content.models import Content
 from src.tools.utils.utils_html import (
     safe_html,
     split_html_safe,

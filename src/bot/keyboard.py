@@ -6,7 +6,7 @@ from html import unescape
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from src.bot.content_dao import Content
+from src.content.models import Content
 
 # ──────────────────────────────────────────
 ROOT_BACK_ID = "back_root"

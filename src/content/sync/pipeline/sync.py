@@ -4,17 +4,19 @@ from loguru import logger
 from qdrant_client.http.models import PointStruct
 
 from src.config import settings
+
 from src.tools.embeddings import generate_embeddings
-from src.content_sync.models import SyncStats
-from src.content_sync.parsing.parser import parse_lines_to_nodes
-from src.content_sync.sources.google_docs import fetch_document
-from src.content_sync.storage import repository
-from src.content_sync.vectorstore.qdrant_store import (
+from src.tools.qdrant_high_level_client import QDRANT_COLLECTION  # for logs only
+
+from src.content.models import SyncStats
+from src.content.sync.storage import repository
+from src.content.parser import parse_lines_to_nodes
+from src.content.sync.sources.google_docs import fetch_document
+from src.content.sync.vectorstore.qdrant_store import (
     is_collection_empty,
     upsert_points,
     delete_points,
 )
-from src.tools.qdrant_high_level_client import QDRANT_COLLECTION  # for logs only
 
 
 async def _walk_and_upsert(parent_id: int | None, node, ord_idx: int, force_reembed: bool, out_seen: set[int],
