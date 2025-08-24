@@ -17,7 +17,7 @@ from src.config import settings, project_root_path
 from src.content_sync.pipeline.sync import run_once
 from src.bot.user_router import router as user_router
 from src.tools.qdrant_high_level_client import ensure_collection
-from src.bot.user_actions_log_middleware import UserActionsLogMiddleware, OutgoingLoggingMiddleware
+from src.activity_log import UserActionsLogMiddleware, OutgoingLoggingMiddleware
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
