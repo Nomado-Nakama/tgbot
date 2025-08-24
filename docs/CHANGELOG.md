@@ -516,4 +516,27 @@ recommendations for maintainability.
 - **Migrations template**: dropped unused `sqlalchemy` import from `migrations/script.py.mako`.  
 - **User router**: minor whitespace/formatting only.
 
-> Notes: Version bumped as a MINOR under SemVer (pre-1.0) for a new feature, and entries grouped per *Keep a Changelog* conventions. :contentReference[oaicite:1]{index=1}
+> Notes: Version bumped as a MINOR under SemVer (pre-1.0) for a new feature, and entries grouped per *Keep a Changelog* conventions.
+
+## [0.6.0] – 2025-08-24
+
+### Added
+- **Content Sync package** (`src/content_sync/`) to separate concerns and keep the ingestion/search path maintainable:
+  - `sources/google_docs.py` – Google Docs fetch + HTML normalization
+  - `parsing/parser.py` – H1–H4 → tree parsing (existing rules preserved)
+  - `storage/repository.py` – KV revision helpers and `(parent_id, ord)` upsert logic
+  - `vectorstore/qdrant_store.py` – robust Qdrant emptiness check (`scroll(1)` with `count()` fallback), upsert/delete
+  - `models.py` – `ContentNode`, `SyncStats`
+  - `pipeline/sync.py` – `run_once()` orchestrator for the full sync (fetch → revision check → parse → DB upserts/moves → delete missing → embed + upsert)
+
+### Changed
+- **Startup flow:** `main.py` now calls `run_once(force_reembed_all_if_empty=True)` after `ensure_collection()`.
+- **Vector ingestion:** embedding + upsert happens via the pipeline; behavior is unchanged but code is now modular.
+
+### Deprecated
+- `src/tools/google_doc_loader.py` is no longer used and will be removed in a future release.
+
+### Removed
+- `src/tools/google_doc_loader.py`
+
+> Notes: Internal refactor only: **no database schema changes** and no user-visible behavior changes.

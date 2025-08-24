@@ -11,12 +11,12 @@ from aiogram.exceptions import TelegramBadRequest
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from googleapiclient.errors import HttpError
 
-from src.config import settings, project_root_path
-from src.tools.db import fetchrow, init_pool
-from src.tools.google_doc_loader import GoogleDocLoader
 from src.tools.logger import logger
-from src.tools.qdrant_high_level_client import ensure_collection
+from src.tools.db import fetchrow, init_pool
+from src.config import settings, project_root_path
+from src.content_sync.pipeline.sync import run_once
 from src.bot.user_router import router as user_router
+from src.tools.qdrant_high_level_client import ensure_collection
 from src.bot.user_actions_log_middleware import UserActionsLogMiddleware, OutgoingLoggingMiddleware
 
 import logging
@@ -24,7 +24,6 @@ logging.basicConfig(level=logging.DEBUG)
 
 dp = Dispatcher()
 dp.include_router(user_router)
-gdl = GoogleDocLoader()
 
 
 @dp.errors()
@@ -63,7 +62,7 @@ async def main():
     try:
         await ensure_collection()
         try:
-            await gdl.reload_content_from_google_docx_to_db()
+            await run_once(force_reembed_all_if_empty=True)
         except HttpError as e:
             logger.info(f"Google docs API returned an error: {e}")
 
