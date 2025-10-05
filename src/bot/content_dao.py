@@ -36,7 +36,3 @@ async def get_children(parent: int | None) -> list[Content]:
 async def get_content(item_id: int) -> Content | None:
     row = await fetchrow(f"SELECT {_SEL} FROM content WHERE id = $1;", item_id)
     return Content(**row) if row else None
-
-
-async def remove_all_content() -> int:
-    return await execute("DELETE FROM content;")

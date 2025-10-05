@@ -1,0 +1,128 @@
+@startuml
+!theme toy
+title High-Level Architecture: Telegram Bot System
+
+skinparam component {
+  FontSize 14
+  BorderColor #2A5A87
+  BackgroundColor #DDEEFF
+}
+skinparam database {
+  FontSize 14
+  BorderColor #888800
+  BackgroundColor #FFFFBB
+}
+skinparam cloud {
+  BorderColor #A00000
+  BackgroundColor #FFDDDD
+}
+
+left to right direction
+
+actor "Telegram User" as User
+cloud "Telegram API" as TG_API
+cloud "Google Docs API\n(Source: Тексты для чат-бота.pdf)" as GoogleDocs
+
+package "Bot Application (src/main.py)" {
+  [Bot Dispatcher/App] as Dispatcher
+  [User Router/Handler\n(src/bot/user_router.py)] as Handler
+  [Content DAO/Search Service\n(src/bot/content_dao.py)] as DAO_Search
+
+  rectangle "I/O Blocking Logging Pipeline" #FFCCCC {
+    component "1. Incoming Middleware\n(src/activity_log/incoming.py)" as UALM
+    component "Context Variables\n(ContextVars)" as ContextVars
+  }
+
+  component "2. Outgoing Middleware\n(src/activity_log/outgoing.py)" as OLM
+}
+
+package "Content Synchronization Pipeline (Background)" #CCCCFF {
+  component "Sync Orchestrator\n(src/content/sync/pipeline/sync.py)" as Sync
+  component "Google Docs Fetcher/Parser\n(src/content/sync/sources/google_docs.py)" as DocFetcher
+  component "Content Repo/Storage\n(src/content/sync/storage/repository.py)" as ContentRepo
+  component "Qdrant Store Interface\n(src/content/sync/vectorstore/qdrant_store.py)" as QdrantStore
+
+  rectangle "Embedding Generation Service" #F0E68C {
+    component "ONNX SentenceTransformer\n(CPU/ThreadPoolExecutor=4 workers)" as Embedder
+  }
+}
+
+package "Persistence Layer" {
+  database "PostgreSQL DB" as PG_DB {
+    component "tg_users / tg_chats" as PG_Users <<table>>
+    component "bot_user_activity_log" as PG_Activity <<table>>
+    component "bot_user_deliveries" as PG_Deliveries <<table>>
+    component "content (Content Hierarchy)" as PG_Content <<table>>
+    component "kv (Revision Check)" as PG_KV <<table>>
+  }
+  database "Qdrant Vector Store" as Qdrant {
+    component "content_vectors (384D Cosine)" as Qdrant_Vectors <<vectors>>
+  }
+}
+
+' ===============================================
+' Flow 1: User Request Handling (edges are labeled only)
+' ===============================================
+
+User --> TG_API : Sends Update (Message, CallbackQuery)
+TG_API --> Dispatcher : Passes Update (Latency T0)
+
+Dispatcher --> UALM : Enters Middleware (Blocking Start)
+note right of UALM
+1) Upsert User (I/O, Blocking) [1-3]
+2) Upsert Chat (I/O, Blocking) [3-5]
+3) Insert Activity Log (I/O, Blocking) [3, 6, 7]
+end note
+
+UALM --> PG_Users : INSERT/UPDATE (Blocking I/O) [1, 2, 4, 5]
+UALM --> PG_Activity : INSERT (Blocking I/O) [6, 7]
+
+UALM --> DAO_Search : Optional Read (for 'open_'/'save_' queries) [8, 9]
+DAO_Search --> PG_Content : SELECT Content/Breadcrumb [8]
+
+UALM --> ContextVars : Set CURRENT_ACTIVITY_ID / SNAPSHOT [6]
+ContextVars <-- UALM
+
+UALM --> Handler : Passes control to main logic
+
+Handler --> DAO_Search : Executes Query/Logic
+DAO_Search ..> Qdrant : Vector Search (RAG, if implemented)
+DAO_Search <-- Qdrant
+
+Handler --> TG_API : Executes Telegram Method (make_request) [10]
+
+TG_API <.. OLM : Intercepts Request/Response [10]
+note left of OLM
+Runs *after* Telegram returns Response [10]
+end note
+
+OLM --> ContextVars : Get ACTIVITY_ID / SNAPSHOT [11, 12]
+OLM --> PG_Deliveries : INSERT Delivery Log [13, 14]
+
+UALM --> PG_Activity : UPDATE Latency (Latency T1) [15, 16]
+
+' ===============================================
+' Flow 2: Content Synchronization (Background Process)
+' ===============================================
+
+Sync --> PG_KV : Check prev_rev / is_collection_empty [17-19]
+
+Sync --> GoogleDocs : Fetch raw content & revision ID [17, 20]
+GoogleDocs --> DocFetcher : Return Raw Text & Revision ID [20, 21]
+
+DocFetcher --> Sync : Parse lines to Content Nodes (H1/H2) [22, 23]
+Sync --> PG_KV : Set new revision ID [18, 23]
+
+Sync --> ContentRepo : Recursively UPSERT Content Nodes [24, 25]
+ContentRepo --> PG_Content : INSERT/UPDATE Content [26]
+
+Sync --> ContentRepo : List All IDs / Delete obsolete rows [25]
+ContentRepo --> PG_Content : DELETE obsolete Content [27]
+
+Sync --> Embedder : Prepare texts for embedding [28]
+Embedder --> QdrantStore : Generate Vectors [28, 29]
+
+Sync --> QdrantStore : Upsert Vectors [28]
+QdrantStore --> Qdrant : UPSERT Points [30]
+QdrantStore --> Qdrant : DELETE Points (obsolete content) [30]
+@enduml

@@ -15,7 +15,8 @@ RUN --mount=type=cache,target=/var/cache/apt \
  && rm -rf /var/lib/apt/lists/*    # cleans layer size
 
 # --- 2. uv installation (single curl, cached) -------------------------------
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ADD --chmod=755 https://astral.sh/uv/install.sh /install.sh
+RUN /install.sh && rm /install.sh
 ENV PATH="/root/.local/bin:${PATH}"
 
 # --- 3. Python deps layer – COPY only lock + metadata  -----------------------

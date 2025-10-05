@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import json
+import asyncio
 from time import perf_counter
 from typing import Any, Awaitable, Callable, Dict, Optional
 
@@ -66,6 +66,18 @@ def _extract_basic(event: TelegramObject) -> dict[str, Any]:
     return data
 
 
+def _spawn_bg(coro: Awaitable[Any], label: str) -> None:
+    """
+    Run a coroutine in the background and log any exception.
+    """
+    task = asyncio.create_task(coro)
+    def _done(t: asyncio.Task):
+        exc = t.exception()
+        if exc:
+            logger.warning(f"[UALM] Background task '{label}' failed: {exc}")
+    task.add_done_callback(_done)
+
+
 class UserActionsLogMiddleware(BaseMiddleware):
     """
     Logs every incoming user action into public.bot_user_activity_log.
@@ -93,9 +105,10 @@ class UserActionsLogMiddleware(BaseMiddleware):
         update_type = base["update_type"]
 
         try:
-            # Ensure user/chat rows exist
-            await repository.upsert_user(user)
-            await repository.upsert_chat(chat)
+            # Ensure user/chat rows exist — but do it off the critical path
+            # (fire-and-forget to cut hot-path latency; idempotent upserts).
+            _spawn_bg(repository.upsert_user(user), "upsert_user")
+            _spawn_bg(repository.upsert_chat(chat), "upsert_chat")
 
             # Guess command (naïve, just from text)
             command = None
