@@ -580,3 +580,31 @@ recommendations for maintainability.
 * **KV revision write**: `set_doc_revision()` now performs an UPSERT, preventing failures when the `doc_revision` key doesn’t exist on first run.
 
 > Notes: No database schema changes. No user-visible behavior changes.
+
+## [0.6.5] – 2025-10-05
+
+### Performance
+
+* **Incoming middleware latency**
+  `UserActionsLogMiddleware` now defers `upsert_user`/`upsert_chat` to background tasks, removing two blocking DB hits from the hot path. Activity insertion and latency bookkeeping remain synchronous for correct delivery binding.
+
+### Changed
+
+* **Dockerfile**
+  Switched UV install to a cached, reproducible flow:
+  `ADD --chmod=755 https://astral.sh/uv/install.sh /install.sh` → `RUN /install.sh && rm /install.sh`.
+
+### Added
+
+* **Documentation**
+  High-level architecture diagram (PlantUML) at `docs/high-level-architecture-diagram.plantuml`.
+
+### Removed
+
+* **DAO cleanup**
+  Dropped unused `remove_all_content()` from `src/bot/content_dao.py`.
+
+### Notes
+
+* No database schema changes.
+* User/chat metadata writes are now **eventually consistent**; they remain idempotent via `INSERT … ON CONFLICT DO UPDATE`.
