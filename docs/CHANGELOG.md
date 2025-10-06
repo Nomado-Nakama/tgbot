@@ -608,3 +608,39 @@ recommendations for maintainability.
 
 * No database schema changes.
 * User/chat metadata writes are now **eventually consistent**; they remain idempotent via `INSERT … ON CONFLICT DO UPDATE`.
+
+## [0.7.0] – 2025-10-07
+
+### Added
+- **Optional vector stack**
+  - `pyproject.toml` now exposes a `[project.optional-dependencies].vector` extra (`qdrant-client[fastembed]`, `sentence-transformers[onnx]`, `onnxruntime`, `torch`).
+  - `Dockerfile` supports `ARG ENABLE_VECTOR` to install with/without the `vector` extra via `uv`.
+  - New `docker-compose.vector.yaml` adds a `qdrant` service and wires the bot to it.
+  - `Makefile` targets:
+    - `make deploy-no-search` – base stack (no Qdrant, no vector deps)
+    - `make deploy-with-search` – base + vector overlay
+- **Runtime flag**
+  - `ENABLE_VECTOR_SEARCH` in `settings` to gate semantic search and ingestion code paths.
+
+### Changed
+- **docker-compose.yaml**: simplified to `db`, `migrator`, `bot`; Qdrant removed from the base file. Build args/env flags (`ENABLE_VECTOR`, `ENABLE_VECTOR_SEARCH`) plumbed through.
+- **main.py**: only ensures Qdrant collection and triggers re-embed flow when vector search is enabled.
+- **content sync pipeline**: conditional imports & execution (emptiness check, upserts/deletes, embeddings) behind the feature flag.
+- **embeddings.py**: loads model/thread-pool only when enabled; raises explicit error if called while disabled.
+- **qdrant_high_level_client.py**: client and `ensure_collection()` defined only when enabled; informative log otherwise.
+- **vectorstore/qdrant_store.py**: exposes safe no-ops when disabled to avoid runtime errors.
+- **search_service.py**: lazy imports and early return when semantic search is disabled.
+- **renderer**: added breadcrumbs debug logs to aid tracing.
+
+### Removed
+- Qdrant service from **base** `docker-compose.yaml` (now lives in `docker-compose.vector.yaml`).
+
+### Breaking
+- **Vector search is opt-in.** Existing deployments that relied on Qdrant being started by default must switch to:
+  - `docker compose -f docker-compose.yaml -f docker-compose.vector.yaml up -d --build` (or `make deploy-with-search`)
+  - Ensure `.env` (or compose `environment`) sets `ENABLE_VECTOR_SEARCH=1` and build with `ENABLE_VECTOR=1`.
+  - Provide `QDRANT_HOST=qdrant`, `QDRANT_PORT=6333` when enabled.
+
+### Notes
+- Slimmer default image and faster cold starts for non-RAG deployments.
+- CI/local dev no longer require heavy vector deps unless explicitly enabled.
