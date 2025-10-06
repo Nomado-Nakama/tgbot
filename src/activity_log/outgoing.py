@@ -56,7 +56,7 @@ class OutgoingLoggingMiddleware(BaseRequestMiddleware):
                 snapshot = CURRENT_CONTENT_SNAPSHOT.get() or {}
                 text_dg = digest(sent_text or "") if sent_text else snapshot.get("text_digest")
 
-                spawn_bg(await repository.insert_delivery(
+                spawn_bg(repository.insert_delivery(
                     activity_id=activity_id,
                     user_id=user_id,
                     chat_id=(result_obj.chat.id if result_obj.chat else chat_id),
