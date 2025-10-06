@@ -4,6 +4,8 @@ from html import escape as html_escape
 import re
 from typing import List, Tuple
 
+from loguru import logger
+
 from src.content.models import Content
 from src.tools.utils.utils_html import (
     safe_html,
@@ -52,7 +54,9 @@ def render_leaf_message(
     Behavior mirrors the previous handlers 1:1.
     """
     # Breadcrumb
+    logger.info(f"breadcrumb_items: {breadcrumb_items}...")
     breadcrumb_text = build_breadcrumb_text(breadcrumb_items)
+    logger.info(f"build_breadcrumb_text: {breadcrumb_text}...")
 
     # Body → safe HTML
     raw_body = item.body or "…"

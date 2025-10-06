@@ -1,0 +1,21 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports: ["6333:6333"]
+    volumes: [qdrant-data:/qdrant/storage]
+    networks: [bot-net]
+
+  bot:
+    # Merge onto the existing service:
+    environment:
+      ENABLE_VECTOR_SEARCH: "1"
+      QDRANT_HOST: qdrant
+      QDRANT_PORT: "6333"
+    build:
+      args:
+        ENABLE_VECTOR: "1"
+    depends_on:
+      qdrant: { condition: service_healthy }
+
+volumes:
+  qdrant-data:

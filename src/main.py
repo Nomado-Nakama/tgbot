@@ -60,9 +60,10 @@ async def main():
     bot.session.middleware(OutgoingLoggingMiddleware())
 
     try:
-        await ensure_collection()
+        if settings.ENABLE_VECTOR_SEARCH:
+            await ensure_collection()
         try:
-            await run_once(force_reembed_all_if_empty=True)
+            await run_once(force_reembed_all_if_empty=settings.ENABLE_VECTOR_SEARCH)
         except HttpError as e:
             logger.info(f"Google docs API returned an error: {e}")
 

@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     POSTGRES_URL: PostgresDsn = "postgresql://postgres:postgres@localhost:5432/tgbot_nakama"
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: str = "6333"
+    ENABLE_VECTOR_SEARCH: bool = False
 
     ADMINS: str
 

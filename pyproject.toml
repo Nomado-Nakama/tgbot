@@ -23,11 +23,8 @@ dependencies = [
     "pytest>=8.3.5",
     "pytest-asyncio>=1.0.0",
     "python-dotenv>=1.1.0",
-    "qdrant-client[fastembed]>=1.14.2",
     "ruff>=0.11.12",
-    "sentence-transformers[onnx]>=4.1.0",
     "testcontainers[postgres]>=4.10.0",
-    "torch>=2.3.0",
 ]
 
 [[tool.uv.index]]
@@ -41,3 +38,11 @@ line-length = 100
 [tool.ruff]
 line-length = 100
 select = ["E", "F", "I", "UP"]
+
+[project.optional-dependencies]
+vector = [
+  "qdrant-client[fastembed]>=1.14.2",
+  "sentence-transformers[onnx]>=4.1.0",
+  "onnxruntime>=1.17.0",
+  "torch>=2.3.0",
+]

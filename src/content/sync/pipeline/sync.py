@@ -1,22 +1,14 @@
 from __future__ import annotations
 
 from loguru import logger
-from qdrant_client.http.models import PointStruct
 
 from src.config import settings
-
-from src.tools.embeddings import generate_embeddings
-from src.tools.qdrant_high_level_client import QDRANT_COLLECTION  # for logs only
 
 from src.content.models import SyncStats
 from src.content.sync.storage import repository
 from src.content.parser import parse_lines_to_nodes
 from src.content.sync.sources.google_docs import fetch_document
-from src.content.sync.vectorstore.qdrant_store import (
-    is_collection_empty,
-    upsert_points,
-    delete_points,
-)
+
 
 
 async def _walk_and_upsert(parent_id: int | None, node, ord_idx: int, force_reembed: bool, out_seen: set[int],
@@ -64,10 +56,12 @@ async def run_once(force_reembed_all_if_empty: bool = True) -> SyncStats:
     prev_rev = await repository.get_doc_revision()
 
     force_reembed = False
-    if force_reembed_all_if_empty and await is_collection_empty():
-        logger.warning("🆕 Empty Qdrant collection detected – forcing full re-index")
-        prev_rev = "totally_nonexistent_revision"
-        force_reembed = True
+    if settings.ENABLE_VECTOR_SEARCH and force_reembed_all_if_empty:
+        from src.content.sync.vectorstore.qdrant_store import is_collection_empty
+        if await is_collection_empty():
+            logger.warning("🆕 Empty Qdrant collection detected – forcing full re-index")
+            prev_rev = "totally_nonexistent_revision"
+            force_reembed = True
 
     if new_rev == prev_rev:
         logger.info("🟢 Google Doc revision unchanged – skipping synchronisation.")
@@ -92,12 +86,19 @@ async def run_once(force_reembed_all_if_empty: bool = True) -> SyncStats:
     to_delete = list(all_ids - seen_ids)
     if to_delete:
         await repository.delete_content_ids(to_delete)
-        await delete_points(to_delete)
+        if settings.ENABLE_VECTOR_SEARCH:
+            from src.content.sync.vectorstore.qdrant_store import delete_points
+            await delete_points(to_delete)
         stats.deleted += len(to_delete)
         logger.info(f"🗑️  Deleted {len(to_delete)} obsolete rows and vectors")
 
     # 8) embed + upsert to Qdrant
-    if embed_candidates:
+    if settings.ENABLE_VECTOR_SEARCH and embed_candidates:
+        from qdrant_client.http.models import PointStruct
+        from src.tools.embeddings import generate_embeddings
+        from src.tools.qdrant_high_level_client import QDRANT_COLLECTION
+        from src.content.sync.vectorstore.qdrant_store import upsert_points
+
         texts = [t for (_cid, t, _title, _has_body) in embed_candidates]
         vectors = generate_embeddings(texts)
         points = [
@@ -107,8 +108,9 @@ async def run_once(force_reembed_all_if_empty: bool = True) -> SyncStats:
         await upsert_points(points)
         stats.embedded += len(points)
         logger.success(f"✅ Upserted {len(points)} vectors into {QDRANT_COLLECTION}")
-
-    if not embed_candidates:
+    elif not settings.ENABLE_VECTOR_SEARCH:
+        logger.info("Skipping embedding generation and Qdrant upsert (vector search disabled).")
+    elif not embed_candidates:
         logger.success("🟢 No content changes that require new embeddings.")
 
     return stats

@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1.7                 # unlock BuildKit features
 FROM python:3.12-slim-bookworm AS base
 
+ARG ENABLE_VECTOR=0
+
 ENV PYTHONUNBUFFERED=1 \
     TZ=Europe/Moscow \
     PIP_DISABLE_PIP_VERSION_CHECK=1
@@ -22,7 +24,13 @@ ENV PATH="/root/.local/bin:${PATH}"
 # --- 3. Python deps layer – COPY only lock + metadata  -----------------------
 COPY pyproject.toml uv.lock* ./
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-dev
+	bash -lc ' \
+	  if [ "$ENABLE_VECTOR" = "1" ]; then \
+	    uv sync --no-dev --extra vector; \
+	  else \
+	    uv sync --no-dev; \
+	  fi \
+	'
 
 # --- 4. Copy source (with BuildKit hard-link optimisation) -------------------
 COPY --link . .
@@ -31,3 +39,9 @@ COPY --link . .
 EXPOSE ${WEBAPP_PORT}
 
 CMD ["uv", "run", "-m", "src.main"]
+
+# Slim (no vector deps)
+# docker build -t bot:slim --build-arg ENABLE_VECTOR=0 .
+
+# Full (with vector deps)
+# docker build -t bot:full --build-arg ENABLE_VECTOR=1 .
