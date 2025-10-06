@@ -1,11 +1,17 @@
-from loguru import logger
+# from loguru import logger
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.types import CallbackQuery, Message
 
-from src.content import build_breadcrumb_text, render_leaf_message
-from src.bot.content_dao import get_children, get_content, get_breadcrumb
-from src.bot.keyboard import ROOT_BACK_ID, build_children_kb, _clean_for_btn
+from src.bot.keyboard import ROOT_BACK_ID, build_children_kb
+from src.bot.cache_layer import (
+    get_children_cached,
+    get_content_cached,
+    get_breadcrumb_cached,
+    build_breadcrumb_text_cached,
+    render_leaf_message_cached,
+    _clean_for_btn_cached,
+)
 
 router = Router(name="user")
 
@@ -28,7 +34,7 @@ async def cmd_start(msg: Message) -> None:
 
 @router.message(Command("menu"))
 async def cmd_help(msg: Message) -> None:
-    roots = await get_children(None)
+    roots = await get_children_cached(None)
     await msg.answer(
         "Выбирай страну, о которой хочешь узнать полезную информацию:",
         reply_markup=build_children_kb(roots, parent_id=None, main_menu=True),
@@ -39,18 +45,18 @@ async def cmd_help(msg: Message) -> None:
 @router.callback_query(F.data.startswith("open_"))
 async def cb_open(cb: CallbackQuery) -> None:
     item_id = int(cb.data.removeprefix("open_"))
-    item = await get_content(item_id)
-    logger.info(f"Got {item}, parent_id = {getattr(item, 'parent_id', None)}")
+    item = await get_content_cached(item_id)
+    # logger.info(f"Got {item}, parent_id = {getattr(item, 'parent_id', None)}")
     if not item:
         await cb.answer("⚠️ Запись не найдена.", show_alert=True)
         return
 
-    breadcrumb_items = await get_breadcrumb(item_id)
-    breadcrumb = _clean_for_btn(build_breadcrumb_text(breadcrumb_items))
+    breadcrumb_items = await get_breadcrumb_cached(item_id)
+    breadcrumb = _clean_for_btn_cached(build_breadcrumb_text_cached(breadcrumb_items))
 
-    children = await get_children(item.id)
+    children = await get_children_cached(item.id)
     if children:  # category
-        logger.info(f"item: {item}")
+        # logger.info(f"item: {item}")
         await cb.message.edit_text(
             f"📂 <b>{breadcrumb}</b>",
             reply_markup=build_children_kb(children, parent_id=item.parent_id),
@@ -60,10 +66,10 @@ async def cb_open(cb: CallbackQuery) -> None:
         return
 
     # Split long text (TG limit 4096)
-    logger.info(f"item: {item}")
-    logger.info(f"message: {cb.message.message_id}")
+    # logger.info(f"item: {item}")
+    # logger.info(f"message: {cb.message.message_id}")
 
-    complete_text, extra_chunks = render_leaf_message(item, breadcrumb_items)
+    complete_text, extra_chunks = render_leaf_message_cached(item, breadcrumb_items)
 
     await cb.message.edit_text(
         complete_text,
@@ -83,7 +89,7 @@ async def cb_open(cb: CallbackQuery) -> None:
 
 @router.callback_query(F.data == ROOT_BACK_ID)
 async def cb_home(cb: CallbackQuery) -> None:
-    roots = await get_children(None)
+    roots = await get_children_cached(None)
     await cb.message.edit_text(
         "Выбирай страну, о которой хочешь узнать полезную информацию:",
         reply_markup=build_children_kb(roots, parent_id=None, main_menu=True),
@@ -95,10 +101,10 @@ async def cb_home(cb: CallbackQuery) -> None:
 @router.callback_query(F.data.startswith("back_"))
 async def cb_back(cb: CallbackQuery) -> None:
     parent_id = int(cb.data.removeprefix("back_"))
-    siblings = await get_children(parent_id)
-    parent_obj = await get_content(parent_id) if parent_id else None
-    breadcrumb_items = await get_breadcrumb(parent_id)
-    breadcrumb = _clean_for_btn(build_breadcrumb_text(breadcrumb_items))
+    siblings = await get_children_cached(parent_id)
+    parent_obj = await get_content_cached(parent_id) if parent_id else None
+    breadcrumb_items = await get_breadcrumb_cached(parent_id)
+    breadcrumb = _clean_for_btn_cached(build_breadcrumb_text_cached(breadcrumb_items))
     await cb.message.edit_text(
         f"📂 <b>{breadcrumb}</b>",
         reply_markup=build_children_kb(
@@ -114,14 +120,14 @@ async def cb_back(cb: CallbackQuery) -> None:
 async def cb_save(cb: CallbackQuery) -> None:
     item_id = int(cb.data.removeprefix("save_").split('_')[0])
     prev_menu_message_id = int(cb.data.removeprefix("save_").split('_')[1])
-    item = await get_content(item_id)
-    logger.info(f"Got {item}, parent_id = {getattr(item, 'parent_id', None)}")
+    item = await get_content_cached(item_id)
+    # logger.info(f"Got {item}, parent_id = {getattr(item, 'parent_id', None)}")
     if not item:
         await cb.answer("⚠️ Запись не найдена.", show_alert=True)
         return
 
-    breadcrumb_items = await get_breadcrumb(item_id)
-    complete_text, extra_chunks = render_leaf_message(item, breadcrumb_items)
+    breadcrumb_items = await get_breadcrumb_cached(item_id)
+    complete_text, extra_chunks = render_leaf_message_cached(item, breadcrumb_items)
 
     # 1) Post a copy “as is” (the original “save into chat” behavior)
     await cb.message.answer(
@@ -153,14 +159,14 @@ async def cb_save(cb: CallbackQuery) -> None:
 #     Robust against empty/HTML-stripped articles (no IndexError).
 #     """
 #     query = msg.text or ""
-#     logger.info("msg_search: query=%r from user=%s", query, msg.from_user.id)
+#     # logger.info("msg_search: query=%r from user=%s", query, msg.from_user.id)
 #
 #     no_results = True
 #     async for item, score in search_content(query, top_k=1):
-#         logger.debug("search hit: id=%s score=%s", item.id, score)
+#         # logger.debug("search hit: id=%s score=%s", item.id, score)
 #
-#         breadcrumb_items = await get_breadcrumb(item.id)
-#         breadcrumb = _clean_for_btn(" › ".join(i.title for i in breadcrumb_items))
+#         breadcrumb_items = await get_breadcrumb_cached(item.id)
+#         breadcrumb = _clean_for_btn_cached(" › ".join(i.title for i in breadcrumb_items))
 #
 #         raw_body = item.body or ""
 #
@@ -170,7 +176,7 @@ async def cb_save(cb: CallbackQuery) -> None:
 #         if chunks:
 #             snippet_html = f"\n\n{chunks[0]}"
 #         else:
-#             logger.warning(f"Empty body for content id={item.id}")
+#             # logger.warning(f"Empty body for content id={item.id}")
 #             snippet_html = ""
 #
 #         kb = InlineKeyboardMarkup(

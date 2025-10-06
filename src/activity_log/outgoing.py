@@ -11,6 +11,7 @@ from aiogram.client.session.middlewares.base import (
 
 from src.tools.utils.utils_hash import digest
 from .context import CURRENT_ACTIVITY_ID, CURRENT_USER_ID, CURRENT_CHAT_ID, CURRENT_CONTENT_SNAPSHOT, trim
+from .incoming import spawn_bg
 from . import repository
 
 
@@ -55,7 +56,7 @@ class OutgoingLoggingMiddleware(BaseRequestMiddleware):
                 snapshot = CURRENT_CONTENT_SNAPSHOT.get() or {}
                 text_dg = digest(sent_text or "") if sent_text else snapshot.get("text_digest")
 
-                await repository.insert_delivery(
+                spawn_bg(await repository.insert_delivery(
                     activity_id=activity_id,
                     user_id=user_id,
                     chat_id=(result_obj.chat.id if result_obj.chat else chat_id),
@@ -67,7 +68,7 @@ class OutgoingLoggingMiddleware(BaseRequestMiddleware):
                     content_body=trim(snapshot.get("content_body")),
                     breadcrumb=snapshot.get("breadcrumb"),
                     method_dump=str(method),
-                )
+                ), 'insert_delivery')
                 logger.info(
                     f"[OLM] Logged delivery: activity={activity_id} "
                     f"method={method_name} chat={chat_id} msg={result_obj.message_id}"

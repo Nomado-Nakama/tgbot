@@ -644,3 +644,30 @@ recommendations for maintainability.
 ### Notes
 - Slimmer default image and faster cold starts for non-RAG deployments.
 - CI/local dev no longer require heavy vector deps unless explicitly enabled.
+
+## [0.7.1] – 2025-10-07
+
+### Performance
+
+* **In-memory caching layer**
+  Added `src/bot/cache_layer.py` with lightweight LRU+TTL caches (process-local, no Redis):
+
+  * DB calls: `get_content`, `get_children`, `get_breadcrumb`
+  * Rendering/string ops: `render_leaf_message`, `build_breadcrumb_text`, `_clean_for_btn`
+    Keys include `text_digest` so caches naturally invalidate after content updates. Default TTL ≈ 1h with bounded sizes to cap memory.
+
+* **Router IO reduction**
+  `user_router.py` now delegates to cached wrappers, keeping hot paths fast during rapid menu navigation and repeated opens.
+
+* **Non-blocking delivery logging**
+  Exported `spawn_bg` from incoming middleware and used it in outgoing logging so `insert_delivery` runs off the hot path.
+
+### Changed
+
+* Renamed `_spawn_bg` → `spawn_bg` (shared helper).
+* Quieted verbose debug logs in `user_router.py`.
+
+### Notes
+
+* No database schema changes.
+* Behavior is unchanged; only latency is improved.

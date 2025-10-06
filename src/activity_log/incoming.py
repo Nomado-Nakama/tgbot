@@ -66,7 +66,7 @@ def _extract_basic(event: TelegramObject) -> dict[str, Any]:
     return data
 
 
-def _spawn_bg(coro: Awaitable[Any], label: str) -> None:
+def spawn_bg(coro: Awaitable[Any], label: str) -> None:
     """
     Run a coroutine in the background and log any exception.
     """
@@ -107,8 +107,8 @@ class UserActionsLogMiddleware(BaseMiddleware):
         try:
             # Ensure user/chat rows exist — but do it off the critical path
             # (fire-and-forget to cut hot-path latency; idempotent upserts).
-            _spawn_bg(repository.upsert_user(user), "upsert_user")
-            _spawn_bg(repository.upsert_chat(chat), "upsert_chat")
+            spawn_bg(repository.upsert_user(user), "upsert_user")
+            spawn_bg(repository.upsert_chat(chat), "upsert_chat")
 
             # Guess command (naïve, just from text)
             command = None
