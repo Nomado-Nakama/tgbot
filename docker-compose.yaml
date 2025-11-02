@@ -38,8 +38,6 @@ services:
       - ./src/:/bot/src
       - ./migrations/:/bot/migrations
       - ./entrypoint.sh:/bot/entrypoint.sh
-      - ./uv.lock:/bot/uv.lock:ro
-      - ./pyproject.toml:/bot/pyproject.toml:ro
     environment:
       # runtime flag so your code can gate RAG calls
       ENABLE_VECTOR_SEARCH: ${ENABLE_VECTOR:-0}
