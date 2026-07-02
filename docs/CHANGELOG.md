@@ -671,3 +671,31 @@ recommendations for maintainability.
 
 * No database schema changes.
 * Behavior is unchanged; only latency is improved.
+
+## [0.8.0] – 2025-11-02
+
+### Added
+
+* **Soft subscribe CTA flow**
+
+  * New `src/bot/cta.py` with callback IDs (`cta_prompt`, `cta_check`, `cta_skip`) and `build_soft_cta_kb()` (buttons: “Открыть канал”, “Я подписался”, “Продолжить без подписки”).
+  * Deep-link `/start` opens the CTA directly.
+  * New handlers in `user_router.py`: `/subscribe`, `cb_cta_prompt`, `cb_cta_check`, `cb_cta_skip`.
+* **Subscription check utility**
+
+  * `_is_user_subscribed(bot, user_id)` uses `getChatMember` and **caches only positive** statuses (`creator` / `administrator` / `member`) with **6h TTL** to cut Bot API calls; negatives and errors are not cached.
+* **Config**
+  * `CHANNEL_URL`, `CHANNEL_ID_OR_USERNAME` added to `settings`.
+
+### Changed
+
+* **Welcome & menu**
+
+  * `/start` now shows CTA if the user isn’t subscribed; `/menu` also displays a soft CTA as a follow-up message.
+
+### DevOps
+
+* **docker-compose**
+
+  * Mounted dev volumes for `bot`: `./src`, `./migrations`, `./entrypoint.sh`; lockfiles (`uv.lock`, `pyproject.toml`) mounted **read-only** for reproducible builds.
+

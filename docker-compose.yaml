@@ -34,6 +34,10 @@ services:
         # build-time flag again, for the final image
         ENABLE_VECTOR: ${ENABLE_VECTOR:-0}
     env_file: ./.env
+    volumes:
+      - ./src/:/bot/src
+      - ./migrations/:/bot/migrations
+      - ./entrypoint.sh:/bot/entrypoint.sh
     environment:
       # runtime flag so your code can gate RAG calls
       ENABLE_VECTOR_SEARCH: ${ENABLE_VECTOR:-0}

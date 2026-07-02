@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     FULL_CONTENT_GOOGLE_DOCS_URL: str
     GOOGLE_SERVICE_ACCOUNT_BASE64: str
 
+    CHANNEL_URL: str = 'https://t.me/nomado_nakama'
+    CHANNEL_ID_OR_USERNAME: str = '@nomado_nakama'
+    TELEGRAM_PROXY_URL: str | None = None
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

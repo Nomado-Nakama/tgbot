@@ -1,0 +1,12 @@
+services:
+  bot:
+    environment:
+      TELEGRAM_PROXY_URL: "http://xray:10809"
+    networks:
+      - bot-net
+      - shared-proxy
+
+networks:
+  bot-net:
+  shared-proxy:
+    external: true
