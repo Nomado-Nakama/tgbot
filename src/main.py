@@ -4,6 +4,7 @@ import traceback
 from aiohttp import web
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.filters import Command
 from aiogram.types import Message, FSInputFile
 from aiogram.types.error_event import ErrorEvent
@@ -55,7 +56,13 @@ async def ping(message: Message):
 
 
 async def main():
-    bot = Bot(settings.BOT_TOKEN, default=DefaultBotProperties(parse_mode="HTML"))
+    session = AiohttpSession(proxy=settings.TELEGRAM_PROXY_URL) if settings.TELEGRAM_PROXY_URL else AiohttpSession()
+
+    bot = Bot(
+        settings.BOT_TOKEN,
+        session=session,
+        default=DefaultBotProperties(parse_mode="HTML"),
+    )
     dp.update.outer_middleware(UserActionsLogMiddleware())
     bot.session.middleware(OutgoingLoggingMiddleware())
 
